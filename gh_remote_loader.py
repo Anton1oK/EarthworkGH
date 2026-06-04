@@ -29,7 +29,7 @@ import tempfile
 
 
 # ---- configure once -------------------------------------------------------
-GITHUB_REPO = ""          # e.g. "your-name/earthwork-studio-gh"
+GITHUB_REPO = "Anton1oK/EarthworkGH"   # owner/name of the repo to load from
 GITHUB_REF = "main"       # branch or tag; a tag (e.g. "v0.8.0") is reproducible
 # ---------------------------------------------------------------------------
 
