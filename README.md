@@ -22,11 +22,11 @@ Full documentation is in the **[project wiki](https://github.com/Anton1oK/Earthw
 
 ## What's inside
 
-25 components, grouped (see the
+24 components, grouped (see the
 [Component Reference](https://github.com/Anton1oK/EarthworkGH/wiki/Component-Reference)
 for every input and output):
 
-- **Setup** — select the country/standard; verify the model units.
+- **Setup** — select the country/standard.
 - **Earth-mass & cartogram** — SPDS square-grid cut/fill; flat grading pad.
 - **Excavation & slopes** — pit slope hachures; topsoil strip; temporary-slope aid; backfill schedule.
 - **Sections** — profile section; serial cross-sections with volumes.

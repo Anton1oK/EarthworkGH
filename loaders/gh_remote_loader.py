@@ -8,12 +8,13 @@ toggling ``refresh`` (or recomputing) pulls the latest code.
 
 Setup (once):
   1. Set GITHUB_REPO below to your "owner/name" (and GITHUB_REF to a branch or,
-     for stability, a release tag like "v0.8.0").
+     for stability, a release tag like "v0.8.0"). Set REFRESH = True briefly to
+     pull the latest code, then back to False.
   2. Connect a text panel with the component name (e.g. "gh_01_cut_fill_cartogram")
      to the FIRST input.
-  3. Recompute. The first pass downloads + sets the input/output sockets; the
-     second pass runs the component. After that, the repo/ref/refresh sockets let
-     you override per-instance.
+  3. Recompute. The first pass downloads + sets the input/output sockets (the only
+     loader socket is the component name; the rest are the component's own); the
+     second pass runs the component.
 
 Requires internet access from Rhino. The repo must be public (or the files
 reachable via raw.githubusercontent.com).
@@ -31,6 +32,7 @@ import tempfile
 # ---- configure once -------------------------------------------------------
 GITHUB_REPO = "Anton1oK/EarthworkGH"   # owner/name of the repo to load from
 GITHUB_REF = "main"       # branch or tag; a tag (e.g. "v0.8.0") is reproducible
+REFRESH = False           # set True once to re-download the latest, then back
 # ---------------------------------------------------------------------------
 
 
@@ -103,7 +105,7 @@ def _safe(part):
 # Resolve configuration: explicit sockets win, else the constants above.
 repo = str(_value("repo", "") or GITHUB_REPO).strip()
 ref = str(_value("ref", "") or GITHUB_REF).strip() or "main"
-refresh = bool(_value("refresh", False))
+refresh = bool(_value("refresh", REFRESH))
 component_name = _value("component", None)
 if component_name is None:
     # On a fresh component the first input is the default variable `x`; connected
@@ -197,34 +199,20 @@ def _execute_component(path, source, output_specs):
 _label = os.path.splitext(os.path.basename(_component_path))[0]
 _set_component_label(_label)
 
-# Config sockets first, then the component's own declared inputs.
-loader_inputs = (
-    ("component", "string", "item"),
-    ("repo", "string", "item", True),
-    ("ref", "string", "item", True),
-    ("refresh", "boolean", "item", True),
-) + tuple(component_inputs)
-loader_outputs = tuple(component_outputs) + (
-    ("loader_status", "string", "item"),
-    ("loader_schema", "string", "item"),
-)
-loader_schema = "{} -> {} ({} inputs / {} outputs)".format(
-    _component_rel, "{}@{}".format(repo, ref), len(loader_inputs), len(loader_outputs)
-)
+# Only one loader socket - the component name - then the component's own inputs
+# and outputs (no loader_status / loader_schema clutter). repo / ref / refresh are
+# the constants at the top of this file.
+loader_inputs = (("component", "string", "item"),) + tuple(component_inputs)
+loader_outputs = tuple(component_outputs)
 
 changed = False
-if "ghenv" in globals():
-    if gh_component_setup.io_matches(ghenv, inputs=loader_inputs, outputs=loader_outputs):
-        changed = False
-    else:
-        changed = gh_component_setup.schedule_ensure_io(
-            ghenv, inputs=loader_inputs, outputs=loader_outputs
-        )
+if "ghenv" in globals() and not gh_component_setup.io_matches(
+    ghenv, inputs=loader_inputs, outputs=loader_outputs
+):
+    changed = gh_component_setup.schedule_ensure_io(
+        ghenv, inputs=loader_inputs, outputs=loader_outputs
+    )
 
 if not changed:
+    # Sockets are in place (or no ghenv) - run the component and surface its outputs.
     _execute_component(_component_path, _component_source, component_outputs)
-    loader_status = "Loaded {} from {}@{} (downloaded {} file(s)).".format(
-        _label, repo, ref, _sync["downloaded"]
-    )
-else:
-    loader_status = "Updated IO for {} (recompute to run).".format(_label)

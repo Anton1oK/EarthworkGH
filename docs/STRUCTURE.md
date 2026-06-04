@@ -16,7 +16,7 @@ EarthworkGH/
 ├── gh_component_setup.py     #    Grasshopper IO setup used by the loader
 ├── gh_remote.py              #    remote-fetch helpers (pure, unit-tested)
 │
-├── gh_components/            # the 25 components (gh_00_* .. gh_23_*)
+├── gh_components/            # the 24 components (gh_00_standard .. gh_23)
 ├── loaders/                  # entry point pasted into a GH Python component
 │   └── gh_remote_loader.py         # load a component straight from GitHub
 ├── docs/                     # planning + reference docs (this file, plan, regs)

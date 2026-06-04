@@ -4,6 +4,16 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
 
 ## [Unreleased]
 
+### Removed
+- The standalone `gh_00_units` component. Each component reads and checks the
+  model units itself, so a separate units node is unnecessary (24 components).
+
+### Changed
+- The remote loader adds only one socket - the component name. `repo`, `ref` and
+  `refresh` are constants at the top of the loader, and the `loader_status` /
+  `loader_schema` outputs were removed, so a loaded component shows only its own
+  inputs and outputs.
+
 ### Fixed
 - Remote loader now reads the component name from the default `x` input on a
   fresh component (connected inputs are exposed as globals by nickname), so it no

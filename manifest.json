@@ -12,7 +12,6 @@
   ],
   "components": [
     "gh_components/gh_00_standard.py",
-    "gh_components/gh_00_units.py",
     "gh_components/gh_01_cut_fill_cartogram.py",
     "gh_components/gh_02_grade_pad.py",
     "gh_components/gh_03_slope_hachures.py",
