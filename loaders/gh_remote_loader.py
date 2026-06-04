@@ -106,6 +106,10 @@ ref = str(_value("ref", "") or GITHUB_REF).strip() or "main"
 refresh = bool(_value("refresh", False))
 component_name = _value("component", None)
 if component_name is None:
+    # On a fresh component the first input is the default variable `x`; connected
+    # inputs are exposed as globals by nickname, so read it directly.
+    component_name = _value("x", None)
+if component_name is None:
     component_name = _peek_first_input()
 component_name = str(component_name or "").strip()
 
