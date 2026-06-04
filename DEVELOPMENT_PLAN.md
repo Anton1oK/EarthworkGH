@@ -41,8 +41,13 @@ features.
   `rhino_adapter.analysis_grid` ray-samples the surface once into a cached node
   grid and returns an O(1) sampler; relief, contours and drainage now share it
   (validated identical to per-point sampling). Collapsed the repeated grid setup.
-- Distribution: a sample `.gh` and `.3dm`, a one-time setup, and a path to a
-  packaged Grasshopper plugin (`.gha` / Yak). Pending.
+- Distribution: STARTED. The repo is GitHub-ready (`LICENSE`, `.gitignore`,
+  `manifest.json`, `CHANGELOG.md`, README install section) and `gh_remote_loader.py`
+  runs any component straight from a GitHub repo: it fetches `manifest.json`,
+  mirrors the modules + components into a per-repo/per-ref cache under the OS temp
+  folder, then loads the component (reusing `gh_component_setup` for IO). Pure,
+  unit-tested helpers in `gh_remote.py` (network fetch injected). Still pending: a
+  sample `.gh` and `.3dm`, and a packaged Grasshopper plugin (`.gha` / Yak).
 
 ### Trust track - make it defensible for documentation
 
