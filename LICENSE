@@ -1,0 +1,30 @@
+Earthwork Studio GH - Proprietary License
+Copyright (c) 2026 Anton Koshelev. All rights reserved.
+
+This software and its source code (the "Software") are made available for
+reference and for use as a Rhino/Grasshopper tool. They are not open source.
+
+You MAY:
+  - View the source code in this repository.
+  - Download and run the Software for your own evaluation and project use,
+    including via the remote loader that fetches files from this repository.
+
+You MAY NOT, without the prior written permission of the copyright holder:
+  - Redistribute, publish, sublicense, sell, or rent the Software or any
+    substantial part of it;
+  - Modify the Software and distribute the modified version;
+  - Remove or alter this license or the copyright notices;
+  - Use the Software or its outputs to create a competing product.
+
+NO WARRANTY. The Software is provided "AS IS", without warranty of any kind,
+express or implied, including but not limited to the warranties of
+merchantability, fitness for a particular purpose, and non-infringement. In no
+event shall the copyright holder be liable for any claim, damages, or other
+liability arising from, out of, or in connection with the Software or its use.
+
+ENGINEERING DISCLAIMER. The Software is a working aid. It does not certify
+geotechnical, structural, or regulatory adequacy and does not replace review by
+a qualified engineer. All outputs must be checked against the current governing
+standards before use in working documentation.
+
+To request other permissions, contact the copyright holder.

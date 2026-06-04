@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Remote-loader cache (downloaded copies of this repo)
+earthwork_studio_gh/
+
+# Rhino / Grasshopper
+*.3dmbak
+*.rhl
+*.bak
+rhino_compute.log
+
+# Generated test artifacts
+tests/rhino_smoke_result.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*~

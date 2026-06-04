@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "test earthwork core",
+      "type": "shell",
+      "command": "python -m unittest discover -s tests -v",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "compile python",
+      "type": "shell",
+      "command": "python -m compileall .",
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}
