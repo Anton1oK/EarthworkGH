@@ -166,6 +166,19 @@ import gh_component_setup
 
 gh_component_setup = importlib.reload(gh_component_setup)
 
+# Self-heal a stale cache: if the cached helper predates a function this loader
+# needs, re-fetch just that one file (so a full REFRESH is not required).
+if not hasattr(gh_component_setup, "schedule_value_lists"):
+    try:
+        with open(os.path.join(_cache, "gh_component_setup.py"), "w", encoding="utf-8") as _handle:
+            _handle.write(_fetch(
+                "https://raw.githubusercontent.com/{}/{}/gh_component_setup.py".format(_boot_repo, ref)
+            ))
+        gh_component_setup = importlib.reload(gh_component_setup)
+    except Exception:
+        pass
+
+
 def _set_component_label(label):
     if "ghenv" not in globals():
         return
@@ -193,14 +206,14 @@ _component_names = sorted(
 if not component_name:
     # Nothing picked yet: offer a drop-down of components on the first input.
     _offered = False
-    if "ghenv" in globals():
+    if "ghenv" in globals() and hasattr(gh_component_setup, "schedule_value_lists"):
         _offered = gh_component_setup.schedule_value_lists(
             ghenv, [(0, gh_component_setup.value_list_items(_component_names, True))]
         )
     if not _offered:
         raise ValueError(
             "Connect a panel with a component name (e.g. 'gh_01_cut_fill_cartogram') "
-            "to the first input, or pick one from the drop-down."
+            "to the first input."
         )
     print("Pick a component from the drop-down on the first input, then recompute.")
 else:
@@ -232,7 +245,7 @@ else:
         _execute_component(_component_path, _component_source, component_outputs)
         # Offer drop-downs: components on the first input, plus any input that
         # declares options (a 5th element in its COMPONENT_INPUTS spec).
-        if "ghenv" in globals():
+        if "ghenv" in globals() and hasattr(gh_component_setup, "schedule_value_lists"):
             _vl_specs = [(0, gh_component_setup.value_list_items(_component_names, True))]
             for _spec in component_inputs:
                 if len(_spec) >= 5 and _spec[4]:

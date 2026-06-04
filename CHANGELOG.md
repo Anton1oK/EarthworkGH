@@ -25,6 +25,10 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
   inputs and outputs.
 
 ### Fixed
+- Remote loader self-heals a stale cache: if the cached `gh_component_setup`
+  predates a helper the loader needs (e.g. the value-list functions), it
+  re-fetches just that file, and the drop-down calls are guarded so an old cache
+  never crashes the component.
 - Remote loader now reads the component name from the default `x` input on a
   fresh component (connected inputs are exposed as globals by nickname), so it no
   longer reports "connect a panel" when a panel is connected.
