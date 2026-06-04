@@ -8,24 +8,25 @@ EarthworkGH/
 ├── CONTRIBUTING.md           # branching model + contribution rules
 ├── manifest.json             # modules + components the remote loader mirrors
 ├── pytest.ini                # test config (offline / CI)
-├── example_component.py      # generic demo target for the local loader (root)
 │
 ├── earthwork_core.py         # ── importable modules (MUST stay at repo root) ──
 ├── rhino_adapter.py          #    universal RhinoCommon plumbing
 ├── standards.py              #    all country/code-specific rules + layers
 ├── version.py                #    tool name/version + provenance
-├── gh_component_setup.py     #    Grasshopper IO setup used by the loaders
+├── gh_component_setup.py     #    Grasshopper IO setup used by the loader
 ├── gh_remote.py              #    remote-fetch helpers (pure, unit-tested)
 │
 ├── gh_components/            # the 25 components (gh_00_* .. gh_23_*)
-├── loaders/                  # entry points pasted into a GH Python component
-│   ├── gh_dynamic_loader.py        # load a component from a local checkout
-│   ├── gh_remote_loader.py         # load a component straight from GitHub
-│   └── gh_dynamic_loader_template.py
+├── loaders/                  # entry point pasted into a GH Python component
+│   └── gh_remote_loader.py         # load a component straight from GitHub
 ├── docs/                     # planning + reference docs (this file, plan, regs)
 ├── tests/                    # pure-Python unit tests + the Rhino smoke test
 └── .github/                  # CI workflow, PR template
 ```
+
+> A local loader (`gh_dynamic_loader.py`, its template, and `example_component.py`)
+> exists for development but is kept off GitHub (git-ignored) - the published repo
+> ships only the remote loader.
 
 ## Why the modules live at the repository root
 

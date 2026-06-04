@@ -10,6 +10,11 @@ venv/
 # Remote-loader cache (downloaded copies of this repo)
 earthwork_studio_gh/
 
+# Local-only loader tooling (kept off GitHub; only the remote loader ships)
+loaders/gh_dynamic_loader.py
+loaders/gh_dynamic_loader_template.py
+example_component.py
+
 # Rhino / Grasshopper
 *.3dmbak
 *.rhl

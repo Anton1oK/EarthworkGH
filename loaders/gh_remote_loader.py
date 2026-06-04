@@ -35,15 +35,37 @@ GITHUB_REF = "main"       # branch or tag; a tag (e.g. "v0.8.0") is reproducible
 
 
 def _fetch(url):
-    """Download a text file over HTTPS (verified). Raises on any failure."""
+    """Download a text file over verified HTTPS.
+
+    Tries the system certificate store, then certifi's bundle if available, since
+    Rhino's bundled Python sometimes lacks a usable store on Windows. TLS
+    verification stays ON; a clear message is raised if it cannot be satisfied.
+    """
 
     import ssl
     import urllib.request
 
     request = urllib.request.Request(url, headers={"User-Agent": "EarthworkStudioGH"})
-    context = ssl.create_default_context()
-    with urllib.request.urlopen(request, timeout=30, context=context) as response:
-        return response.read().decode("utf-8")
+    contexts = [ssl.create_default_context()]
+    try:
+        import certifi
+
+        contexts.append(ssl.create_default_context(cafile=certifi.where()))
+    except Exception:
+        pass
+
+    last_ssl_error = None
+    for context in contexts:
+        try:
+            with urllib.request.urlopen(request, timeout=30, context=context) as response:
+                return response.read().decode("utf-8")
+        except ssl.SSLError as ssl_error:
+            last_ssl_error = ssl_error
+    raise RuntimeError(
+        "TLS verification failed for {} ({}). Rhino's Python may be missing a "
+        "certificate store - run 'pip install certifi' in Rhino's Python, or "
+        "install the system certificates.".format(url, last_ssl_error)
+    )
 
 
 def _peek_first_input():
@@ -105,29 +127,38 @@ _cache = os.path.join(
 if not os.path.isdir(_cache):
     os.makedirs(_cache)
 
-# Bootstrap: fetch gh_remote.py itself, then let it sync everything else.
-_boot_repo = repo
-if _boot_repo.lower().startswith("github.com/"):
-    _boot_repo = _boot_repo[len("github.com/"):]
-_boot_repo = _boot_repo.strip("/")
-_boot = os.path.join(_cache, "gh_remote.py")
-if refresh or not os.path.exists(_boot):
-    _boot_url = "https://raw.githubusercontent.com/{}/{}/gh_remote.py".format(_boot_repo, ref)
-    with open(_boot, "w", encoding="utf-8") as _handle:
-        _handle.write(_fetch(_boot_url))
-
+# Make the cache importable before anything is downloaded into it.
 if _cache not in sys.path:
     sys.path.insert(0, _cache)
 _components_dir = os.path.join(_cache, "gh_components")
 if _components_dir not in sys.path:
     sys.path.insert(0, _components_dir)
 
-import gh_remote
+# Bootstrap (fetch gh_remote.py, then sync everything) - the only network steps.
+_boot_repo = repo
+if _boot_repo.lower().startswith("github.com/"):
+    _boot_repo = _boot_repo[len("github.com/"):]
+_boot_repo = _boot_repo.strip("/")
+try:
+    _boot = os.path.join(_cache, "gh_remote.py")
+    if refresh or not os.path.exists(_boot):
+        _boot_url = "https://raw.githubusercontent.com/{}/{}/gh_remote.py".format(_boot_repo, ref)
+        with open(_boot, "w", encoding="utf-8") as _handle:
+            _handle.write(_fetch(_boot_url))
 
-gh_remote = importlib.reload(gh_remote)
+    import gh_remote
 
-# Pull the manifest + all modules and components into the cache.
-_sync = gh_remote.sync(repo, ref, _cache, _fetch, refresh=refresh)
+    gh_remote = importlib.reload(gh_remote)
+
+    # Pull the manifest + all modules and components into the cache.
+    _sync = gh_remote.sync(repo, ref, _cache, _fetch, refresh=refresh)
+except Exception as _err:
+    raise RuntimeError(
+        "Remote loader could not fetch '{}@{}'. Reason: {}. Checklist: "
+        "(1) Rhino has internet access (a proxy / VPN / firewall can block it); "
+        "(2) the repo is public and the owner/name is correct; "
+        "(3) the ref '{}' (branch or tag) exists.".format(repo, ref, _err, ref)
+    )
 
 import gh_component_setup
 
