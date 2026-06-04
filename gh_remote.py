@@ -5,8 +5,8 @@ component-schema parse are unit-tested. The network fetch is passed in as a
 callable, so this module imports no networking at load time and the whole sync
 can be tested offline with a fake fetcher.
 
-The Grasshopper-side bootstrap lives in ``gh_remote_loader.py``; it downloads
-this file first, then delegates here.
+The Grasshopper-side bootstrap lives in ``loaders/gh_remote_loader.py``; it
+downloads this file first, then delegates here.
 """
 
 from __future__ import annotations

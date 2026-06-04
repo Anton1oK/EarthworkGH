@@ -3,7 +3,8 @@ Generic Grasshopper Python 3 dynamic loader template.
 
 Paste this file into one Rhino 8 Grasshopper Python 3 component. Connect a
 File Path parameter to the component's first/default input and point it at an
-external component script, for example example_component.py.
+external component script - one of the scripts in gh_components/, or the
+example_component.py at the repository root.
 
 The external script declares COMPONENT_INPUTS and COMPONENT_OUTPUTS. This
 loader reads those declarations, updates the Grasshopper sockets, then executes

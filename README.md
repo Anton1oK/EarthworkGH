@@ -271,9 +271,10 @@ and the warning clears.
 There are two ways to run a component: from a **local copy** of the repo, or
 **straight from GitHub** (no checkout needed).
 
-### Option A - local loader (`gh_dynamic_loader.py`)
+### Option A - local loader (`loaders/gh_dynamic_loader.py`)
 
-1. Paste `gh_dynamic_loader.py` into one Rhino 8 Grasshopper Python 3 component.
+1. Paste `loaders/gh_dynamic_loader.py` into one Rhino 8 Grasshopper Python 3
+   component.
 2. Connect a Grasshopper File Path parameter to its first input.
 3. Point the File Path to one of the scripts in `gh_components/`. The loader
    auto-detects the project folder from that path, so the kit is portable - copy
@@ -281,12 +282,13 @@ There are two ways to run a component: from a **local copy** of the repo, or
    edit).
 4. Recompute Grasshopper after edits.
 
-### Option B - remote loader (`gh_remote_loader.py`, from GitHub)
+### Option B - remote loader (`loaders/gh_remote_loader.py`, from GitHub)
 
 Run a component directly from the GitHub repo - useful for sharing the kit
 without sending files around.
 
-1. Paste `gh_remote_loader.py` into one Rhino 8 Grasshopper Python 3 component.
+1. Paste `loaders/gh_remote_loader.py` into one Rhino 8 Grasshopper Python 3
+   component.
 2. Edit the two constants at the top once: `GITHUB_REPO = "owner/name"` and
    `GITHUB_REF` (a branch like `main`, or a release tag like `v0.8.0` for a
    reproducible pin).
@@ -315,20 +317,15 @@ name).
 
 ## Publishing to GitHub
 
-The repo is ready to push. From the project folder:
+The project lives at **https://github.com/Anton1oK/EarthworkGH**. The remote
+loader (`loaders/gh_remote_loader.py`) already defaults to that repo, so sharing
+that one file lets collaborators run the whole kit. Tag releases
+(`git tag -a vX.Y.Z -m "..." && git push --tags`) so the remote loader can pin a
+fixed version via its `GITHUB_REF`.
 
-```bash
-git add -A
-git commit -m "Earthwork Studio GH"      # already done on first import
-git remote add origin https://github.com/<owner>/<name>.git
-git branch -M main
-git push -u origin main
-```
-
-Then set `GITHUB_REPO = "<owner>/<name>"` in `gh_remote_loader.py` and share that
-one file - collaborators run the whole kit from your repo. Tag releases
-(`git tag v0.8.0 && git push --tags`) so the remote loader can pin a fixed
-version.
+Branching model (see [CONTRIBUTING.md](CONTRIBUTING.md)): `main` is stable and
+released, `develop` is the integration branch, and feature branches
+(`feature/…`, `fix/…`, `chore/…`) merge into `develop` via pull request.
 
 ## Standards Layer
 
@@ -345,10 +342,10 @@ given. To support another country, add a new `Standard` subclass in
 ## Provenance
 
 Every output is traceable. The neutral tool version lives in `version.py`
-(`Earthwork Studio GH v0.7.0`); each `Standard` declares the regulation editions
+(`Earthwork Studio GH v0.8.0`); each `Standard` declares the regulation editions
 it encodes (`regulations`) and when they were last reviewed (`checked_on`).
 `version.provenance(standard)` combines them into one line, e.g.
-`Earthwork Studio GH v0.7.0 - standard RU: ГОСТ 21.508-2020, СП 45.13330.2017,
+`Earthwork Studio GH v0.8.0 - standard RU: ГОСТ 21.508-2020, СП 45.13330.2017,
 ...; checked 2026-06`. It is shown by `gh_00_standard` and stamped onto the sheet
 by `gh_23_titleblock`. The stamp records the encoded editions; it does not
 replace engineer review (the kit never certifies geotechnical adequacy). Bump
@@ -357,11 +354,13 @@ replace engineer review (the kit never certifies geotechnical adequacy). Bump
 ## Local Verification
 
 ```powershell
-python -m unittest discover -s tests -v
+python -m pytest          # same suite CI runs (3.9 / 3.11 / 3.12)
 python -m compileall .
 ```
 
 ## Project Documents
 
-- `DEVELOPMENT_PLAN.md` - staged feature roadmap.
-- `REGULATORY_BASIS.md` - standards and implementation boundaries.
+- [docs/STRUCTURE.md](docs/STRUCTURE.md) - repository layout and why modules stay at root.
+- [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) - staged feature roadmap.
+- [docs/REGULATORY_BASIS.md](docs/REGULATORY_BASIS.md) - standards and implementation boundaries.
+- [CONTRIBUTING.md](CONTRIBUTING.md) - branching model and contribution rules.
