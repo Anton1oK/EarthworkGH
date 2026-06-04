@@ -4,6 +4,18 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
 
 ## [Unreleased]
 
+### Fixed
+- Remote loader downloads are more robust: TLS verification stays on, with a
+  `certifi` certificate-bundle fallback for Rhino's bundled Python (a common
+  Windows cause of failed downloads), and a clear, actionable message
+  (internet/proxy, repo name, ref, or missing certificates) when a fetch fails
+  instead of an opaque error.
+
+### Changed
+- The published repo ships only `loaders/gh_remote_loader.py`. The local loader,
+  its template and `example_component.py` are kept off GitHub (git-ignored) for
+  local development.
+
 ### Added
 - Project **wiki**: Home, Installation, Workflows, a full Component Reference
   (every component with its inputs and outputs), and a Standards page (RU + INT

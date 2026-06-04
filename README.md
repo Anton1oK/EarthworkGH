@@ -56,12 +56,10 @@ standard's regulation editions — see
 
 ## Quick start
 
-Paste one loader into a Rhino 8 Grasshopper Python 3 component:
-
-- **Local:** `loaders/gh_dynamic_loader.py` + a File Path pointing at a script in
-  `gh_components/`.
-- **From GitHub:** `loaders/gh_remote_loader.py` + a panel naming the component
-  (e.g. `gh_01_cut_fill_cartogram`). It defaults to this repo.
+Paste [`loaders/gh_remote_loader.py`](loaders/gh_remote_loader.py) into a Rhino 8
+Grasshopper Python 3 component and connect a panel naming the component (e.g.
+`gh_01_cut_fill_cartogram`) to its first input. It defaults to this repo, fetches
+the component and its dependencies from GitHub, and runs it.
 
 Full steps and unit/type-hint notes are in the
 [Installation guide](https://github.com/Anton1oK/EarthworkGH/wiki/Installation).
