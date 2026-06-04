@@ -4,7 +4,14 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
 
 ## [Unreleased]
 
+### Added
+- Project **wiki**: Home, Installation, Workflows, a full Component Reference
+  (every component with its inputs and outputs), and a Standards page (RU + INT
+  citations, rule tables, checks, layer plans).
+
 ### Changed
+- README trimmed to an overview that links to the wiki; the detailed
+  per-component and standards descriptions now live in the wiki.
 - Project restructured for GitHub: docs under `docs/`, the pasted-in loaders
   under `loaders/`, CI workflow + PR template under `.github/`, `pytest.ini` and
   `CONTRIBUTING.md` added. Importable modules and `gh_components/` stay at the
