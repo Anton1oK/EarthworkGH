@@ -13,7 +13,7 @@ import sys
 COMPONENT_INPUTS = (
     ("base_depth_m", "number", "item"),
     ("frost_depth_m", "number", "item", True),
-    ("soil_class", "number", "item", True),
+    ("soil_class", "number", "item", True, ("1", "2", "3", "4", "5", "6")),
     ("freezing_index", "number", "item", True),
     ("thermal_factor", "number", "item", True),
     ("heaving", "boolean", "item", True),

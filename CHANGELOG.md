@@ -4,6 +4,16 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
 
 ## [Unreleased]
 
+### Added
+- Drop-down (value-list) inputs. The remote loader attaches a drop-down of the
+  repo's components to its first input (leave it empty and recompute to get the
+  list), and drop-downs for inputs that declare options - `standard_code`
+  (RU/INT), `soil_class` (1-6) and `sheet` (A0-A4). A component input can declare
+  options as a 5th element in its `COMPONENT_INPUTS` spec, e.g.
+  `("standard_code", "string", "item", True, ("RU", "INT"))`. Drop-downs are only
+  created when an input has nothing connected, so manual wiring is never
+  overridden.
+
 ### Removed
 - The standalone `gh_00_units` component. Each component reads and checks the
   model units itself, so a separate units node is unnecessary (24 components).

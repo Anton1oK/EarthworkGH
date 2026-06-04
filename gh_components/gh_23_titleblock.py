@@ -7,7 +7,7 @@ import sys
 
 
 COMPONENT_INPUTS = (
-    ("sheet", "string", "item", True),
+    ("sheet", "string", "item", True, ("A3", "A4", "A2", "A1", "A0")),
     ("origin", "point", "item", True),
     ("object_text", "string", "item", True),
     ("title_text", "string", "item", True),
