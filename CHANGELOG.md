@@ -2,6 +2,17 @@
 
 All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
 
+## [Unreleased]
+
+### Changed
+- Project restructured for GitHub: docs under `docs/`, the pasted-in loaders
+  under `loaders/`, CI workflow + PR template under `.github/`, `pytest.ini` and
+  `CONTRIBUTING.md` added. Importable modules and `gh_components/` stay at the
+  repository root (the loaders import them by bare name and the remote loader
+  mirrors them into its cache root - see `docs/STRUCTURE.md`).
+- Branching model documented: `main` (released) / `develop` (integration) /
+  feature branches.
+
 ## [0.8.0] - 2026-06-04
 
 ### Added
@@ -57,4 +68,4 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
 
 - Earth-mass cartogram, drawing production, excavation, relief and drainage,
   sections and documentation, and Revit terrain-points export. See
-  `DEVELOPMENT_PLAN.md` for the per-release detail.
+  `docs/DEVELOPMENT_PLAN.md` for the per-release detail.
