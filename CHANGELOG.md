@@ -5,6 +5,9 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
 ## [Unreleased]
 
 ### Fixed
+- Remote loader now reads the component name from the default `x` input on a
+  fresh component (connected inputs are exposed as globals by nickname), so it no
+  longer reports "connect a panel" when a panel is connected.
 - Remote loader downloads are more robust: TLS verification stays on, with a
   `certifi` certificate-bundle fallback for Rhino's bundled Python (a common
   Windows cause of failed downloads), and a clear, actionable message
