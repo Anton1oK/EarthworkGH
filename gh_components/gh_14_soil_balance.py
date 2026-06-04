@@ -9,7 +9,7 @@ import sys
 COMPONENT_INPUTS = (
     ("cut_m3", "number", "item"),
     ("fill_m3", "number", "item"),
-    ("soil_class", "number", "item", True),
+    ("soil_class", "number", "item", True, ("1", "2", "3", "4", "5", "6")),
     ("initial_bulking", "number", "item", True),
     ("residual_bulking", "number", "item", True),
 )

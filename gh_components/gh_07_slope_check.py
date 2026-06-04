@@ -14,7 +14,7 @@ import sys
 COMPONENT_INPUTS = (
     ("proposed_slope_1_to", "number", "item"),
     ("depth_m", "number", "item"),
-    ("soil_class", "number", "item", True),
+    ("soil_class", "number", "item", True, ("1", "2", "3", "4", "5", "6")),
     ("allowable_slope_1_to", "number", "item", True),
     ("groundwater", "boolean", "item", True),
     ("surcharge", "boolean", "item", True),

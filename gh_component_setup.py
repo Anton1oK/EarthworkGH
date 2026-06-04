@@ -588,3 +588,173 @@ def _access(ghk, access):
     if access == "list":
         return ghk.GH_ParamAccess.list
     return ghk.GH_ParamAccess.item
+
+
+# --- Value-list (drop-down) helpers ---------------------------------------
+# Attach a GH_ValueList drop-down to inputs that have no source, so the user
+# picks from predefined options instead of typing. Idempotent and fully
+# defensive: any failure leaves the component working without the drop-down.
+
+
+def schedule_value_lists(ghenv, specs):
+    """Attach a drop-down (GH_ValueList) to inputs that currently have no source.
+
+    ``specs`` is a list of ``(target, items)`` where ``target`` is an input name
+    (str) or index (int) and ``items`` is a list of ``(display, expression)``
+    pairs (expression is the GH value, e.g. ``'"RU"'`` for text or ``'1'`` for a
+    number). An input that already has a non-value-list source is left alone; a
+    value list we previously made is refreshed only when its items differ.
+    Returns True when work was scheduled (so the caller can avoid reporting an
+    "empty input" error). Runs the change after the current solution.
+    """
+
+    if ghenv is None:
+        return False
+    try:
+        import Grasshopper  # noqa: F401  (presence check)
+    except Exception:
+        return False
+
+    component = ghenv.Component
+    document = component.OnPingDocument()
+    if document is None:
+        return False
+
+    # Decide synchronously what needs doing - this prevents reschedule loops.
+    pending = []
+    for target, items in specs:
+        param = _resolve_input_param(component, target)
+        if param is None or not items:
+            continue
+        if _value_list_state(param, items) in ("create", "update"):
+            pending.append((target, list(items)))
+    if not pending:
+        return False
+
+    def callback(_document):
+        """Attach/refresh the value lists once the solution has finished."""
+        try:
+            for target, items in pending:
+                param = _resolve_input_param(component, target)
+                if param is not None:
+                    _attach_or_update_value_list(param, items, _document)
+            component.ExpireSolution(False)
+        except Exception:
+            pass
+
+    try:
+        document.ScheduleSolution(1, callback)
+        return True
+    except Exception:
+        return False
+
+
+def value_list_items(values, as_string):
+    """Turn plain values into ``(display, expression)`` pairs for a value list."""
+
+    items = []
+    for value in values:
+        text = str(value)
+        expression = '"{}"'.format(text) if as_string else text
+        items.append((text, expression))
+    return items
+
+
+def _resolve_input_param(component, target):
+    try:
+        group = component.Params.Input
+        if isinstance(target, int):
+            return _safe_param_at(group, target)
+        for index in range(int(group.Count)):
+            param = _safe_param_at(group, index)
+            if param is not None and param.Name == target:
+                return param
+    except Exception:
+        return None
+    return None
+
+
+def _existing_value_list(param):
+    try:
+        for source in param.Sources:
+            if type(source).__name__ == "GH_ValueList":
+                return source
+    except Exception:
+        pass
+    return None
+
+
+def _value_list_state(param, items):
+    """'create' (no source), 'update' (our list differs), or 'skip'."""
+    try:
+        if int(param.SourceCount) > 0:
+            value_list = _existing_value_list(param)
+            if value_list is None:
+                return "skip"  # the user wired something else - never override it
+            return "skip" if _value_list_items_match(value_list, items) else "update"
+    except Exception:
+        return "skip"
+    return "create"
+
+
+def _value_list_items_match(value_list, items):
+    try:
+        existing = list(value_list.ListItems)
+        if len(existing) != len(items):
+            return False
+        for got, (display, expression) in zip(existing, items):
+            if str(got.Name) != str(display) or str(got.Expression) != str(expression):
+                return False
+        return True
+    except Exception:
+        return False
+
+
+def _attach_or_update_value_list(param, items, document):
+    try:
+        from Grasshopper.Kernel.Special import GH_ValueList, GH_ValueListItem
+    except Exception:
+        return
+
+    value_list = _existing_value_list(param)
+    created = False
+    if value_list is None:
+        try:
+            if int(param.SourceCount) > 0:
+                return  # non-value-list source present; do not override
+        except Exception:
+            return
+        value_list = GH_ValueList()
+        created = True
+
+    try:
+        value_list.ListItems.Clear()
+        for display, expression in items:
+            value_list.ListItems.Add(GH_ValueListItem(str(display), str(expression)))
+        try:
+            value_list.NickName = param.Name
+        except Exception:
+            pass
+        value_list.SelectItem(0)
+    except Exception:
+        return
+
+    if created:
+        try:
+            value_list.CreateAttributes()
+            import System.Drawing as _sd
+
+            pivot = param.Attributes.Pivot
+            value_list.Attributes.Pivot = _sd.PointF(float(pivot.X) - 230.0, float(pivot.Y) - 10.0)
+        except Exception:
+            pass
+        try:
+            document.AddObject(value_list, False)
+            param.AddSource(value_list)
+        except Exception:
+            return
+
+    try:
+        value_list.ExpireSolution(True)
+    except Exception:
+        pass

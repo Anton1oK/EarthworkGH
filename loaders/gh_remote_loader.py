@@ -117,14 +117,10 @@ component_name = str(component_name or "").strip()
 
 if not repo:
     raise ValueError(
-        "Set GITHUB_REPO at the top of the remote loader to your 'owner/name' "
-        "(or connect a 'repo' input)."
+        "Set GITHUB_REPO at the top of the remote loader to your 'owner/name'."
     )
-if not component_name:
-    raise ValueError(
-        "Connect a panel with the component name (e.g. 'gh_01_cut_fill_cartogram') "
-        "to the first input."
-    )
+# component_name may be empty here - after syncing we offer a drop-down of the
+# available components on the first input instead of erroring.
 
 # Cache folder (stable per repo + ref, so recomputes do not re-download).
 _cache = os.path.join(
@@ -170,14 +166,6 @@ import gh_component_setup
 
 gh_component_setup = importlib.reload(gh_component_setup)
 
-# Read the requested component's source + schema from the cache.
-_component_rel = gh_remote.normalize_component(component_name)
-_component_path = os.path.join(_cache, *_component_rel.split("/"))
-with open(_component_path, "r", encoding="utf-8") as _handle:
-    _component_source = _handle.read()
-component_inputs, component_outputs = gh_remote.parse_schema(_component_source, _component_path)
-
-
 def _set_component_label(label):
     if "ghenv" not in globals():
         return
@@ -196,23 +184,60 @@ def _execute_component(path, source, output_specs):
         globals()[name] = env.get(name, None)
 
 
-_label = os.path.splitext(os.path.basename(_component_path))[0]
-_set_component_label(_label)
+# Component names in this repo (for the component drop-down on the first input).
+_component_names = sorted(
+    os.path.splitext(os.path.basename(_path))[0]
+    for _path in _sync["manifest"].get("components", [])
+)
 
-# Only one loader socket - the component name - then the component's own inputs
-# and outputs (no loader_status / loader_schema clutter). repo / ref / refresh are
-# the constants at the top of this file.
-loader_inputs = (("component", "string", "item"),) + tuple(component_inputs)
-loader_outputs = tuple(component_outputs)
-
-changed = False
-if "ghenv" in globals() and not gh_component_setup.io_matches(
-    ghenv, inputs=loader_inputs, outputs=loader_outputs
-):
-    changed = gh_component_setup.schedule_ensure_io(
-        ghenv, inputs=loader_inputs, outputs=loader_outputs
+if not component_name:
+    # Nothing picked yet: offer a drop-down of components on the first input.
+    _offered = False
+    if "ghenv" in globals():
+        _offered = gh_component_setup.schedule_value_lists(
+            ghenv, [(0, gh_component_setup.value_list_items(_component_names, True))]
+        )
+    if not _offered:
+        raise ValueError(
+            "Connect a panel with a component name (e.g. 'gh_01_cut_fill_cartogram') "
+            "to the first input, or pick one from the drop-down."
+        )
+    print("Pick a component from the drop-down on the first input, then recompute.")
+else:
+    # Read the requested component's source + schema from the cache.
+    _component_rel = gh_remote.normalize_component(component_name)
+    _component_path = os.path.join(_cache, *_component_rel.split("/"))
+    with open(_component_path, "r", encoding="utf-8") as _handle:
+        _component_source = _handle.read()
+    component_inputs, component_outputs = gh_remote.parse_schema(
+        _component_source, _component_path
     )
 
-if not changed:
-    # Sockets are in place (or no ghenv) - run the component and surface its outputs.
-    _execute_component(_component_path, _component_source, component_outputs)
+    _set_component_label(os.path.splitext(os.path.basename(_component_path))[0])
+
+    # One loader socket (the component name) + the component's own inputs/outputs.
+    loader_inputs = (("component", "string", "item"),) + tuple(component_inputs)
+    loader_outputs = tuple(component_outputs)
+
+    changed = False
+    if "ghenv" in globals() and not gh_component_setup.io_matches(
+        ghenv, inputs=loader_inputs, outputs=loader_outputs
+    ):
+        changed = gh_component_setup.schedule_ensure_io(
+            ghenv, inputs=loader_inputs, outputs=loader_outputs
+        )
+
+    if not changed:
+        # Sockets are in place - run the component and surface its outputs.
+        _execute_component(_component_path, _component_source, component_outputs)
+        # Offer drop-downs: components on the first input, plus any input that
+        # declares options (a 5th element in its COMPONENT_INPUTS spec).
+        if "ghenv" in globals():
+            _vl_specs = [(0, gh_component_setup.value_list_items(_component_names, True))]
+            for _spec in component_inputs:
+                if len(_spec) >= 5 and _spec[4]:
+                    _as_string = _spec[1] in ("string", "text", "str")
+                    _vl_specs.append(
+                        (_spec[0], gh_component_setup.value_list_items(_spec[4], _as_string))
+                    )
+            gh_component_setup.schedule_value_lists(ghenv, _vl_specs)
