@@ -35,6 +35,9 @@ feature/x ─▶ develop ─▶ main ─▶ tag vX.Y.Z
    (`tests/test_remote.py` enforces that it matches the files on disk).
 5. Components use item-access inputs only (the target Rhino build does not
    reliably set list access on script inputs).
+6. Documentation lives in `wiki/` (not the GitHub wiki directly). It is
+   auto-published to the wiki on push to `main`; a test keeps
+   `wiki/Component-Reference.md` in sync with the components.
 
 See [docs/STRUCTURE.md](docs/STRUCTURE.md) for the repository layout and
 [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) for the roadmap.

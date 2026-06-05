@@ -20,9 +20,15 @@ EarthworkGH/
 ├── loaders/                  # entry point pasted into a GH Python component
 │   └── gh_remote_loader.py         # load a component straight from GitHub
 ├── docs/                     # planning + reference docs (this file, plan, regs)
+├── wiki/                     # source for the GitHub wiki (auto-published on push to main)
 ├── tests/                    # pure-Python unit tests + the Rhino smoke test
-└── .github/                  # CI workflow, PR template
+└── .github/                  # CI + publish-wiki workflows, PR template
 ```
+
+The published [GitHub wiki](https://github.com/Anton1oK/EarthworkGH/wiki) is
+generated from `wiki/` by `.github/workflows/publish-wiki.yml` on every push to
+`main` - edit the pages in `wiki/` (a test keeps the Component Reference in sync
+with the components), not the wiki directly.
 
 > A local loader (`gh_dynamic_loader.py`, its template, and `example_component.py`)
 > exists for development but is kept off GitHub (git-ignored) - the published repo
