@@ -66,11 +66,12 @@ Full steps and unit/type-hint notes are in the
 
 ## Standards
 
-Two standards ship: `RU` (Russian SPDS / ГОСТ / СП, the default) and `INT`
-(generic metric, English — proves the multi-country design). Select one with the
-`gh_00_standard` component. All country-specific rules, text and layer plans live
-in `standards.py`; add a country by subclassing `Standard` and registering it. See
-the [Standards page](https://github.com/Anton1oK/EarthworkGH/wiki/Standards).
+Three standards ship: `RU` (Russian SPDS / ГОСТ / СП, the default), `US`
+(imperial — cubic yards/feet, OSHA / IBC / ADA), and `INT` (generic metric,
+English). Select one with the `gh_00_standard` component. All country-specific
+rules, text and layer plans live in `standards.py`; add a country by subclassing
+`Standard` and registering it. See the
+[Standards page](https://github.com/Anton1oK/EarthworkGH/wiki/Standards).
 
 ## Project
 

@@ -12,7 +12,7 @@ import sys
 
 
 COMPONENT_INPUTS = (
-    ("standard_code", "string", "item", True, ("RU", "INT")),
+    ("standard_code", "string", "item", True, ("RU", "INT", "US")),
 )
 
 COMPONENT_OUTPUTS = (

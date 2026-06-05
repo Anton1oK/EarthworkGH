@@ -484,7 +484,7 @@ def mesh_vertical_sampler(mesh, max_horizontal_gap=None, meters_per_unit=1.0):
 
 
 def cartogram_geometry(result: CutFillResult, proposed_sampler, text_height=0.4,
-                       meters_per_unit=1.0, volume_label="m3"):
+                       meters_per_unit=1.0, volume_label="m3", volume_factor=1.0):
     """Build Rhino preview and drafting geometry from a cartogram result.
 
     Geometry is placed in document units (so it overlays the model), while
@@ -515,7 +515,8 @@ def cartogram_geometry(result: CutFillResult, proposed_sampler, text_height=0.4,
         if cell.classification != "zero":
             cell_dots.append(
                 _cell_volume_tag(
-                    cell, proposed_sampler, unit_scale, cell_tag_height, volume_label
+                    cell, proposed_sampler, unit_scale, cell_tag_height,
+                    volume_label, volume_factor
                 )
             )
         for vertex in cell.corners:
@@ -1199,11 +1200,11 @@ def _cell_hatches(cell, proposed_sampler, unit_scale=1.0):
 
 
 def _cell_volume_tag(cell, proposed_sampler, unit_scale=1.0, text_height=0.4,
-                     volume_label="m3"):
+                     volume_label="m3", volume_factor=1.0):
     x, y = cell.center
     z = proposed_sampler(x, y) + 0.025 * unit_scale
     return _text_tag(
-        "{:+.1f} {}".format(cell.net_m3, volume_label),
+        "{:+.1f} {}".format(cell.net_m3 * volume_factor, volume_label),
         rg.Point3d(x, y, z),
         text_height,
     )

@@ -2,6 +2,18 @@
 
 All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
 
+## [0.9.0] - 2026-06-05
+
+### Added
+- **US standard (imperial).** A `US` standard reports volumes in cubic yards (CY),
+  areas in square feet (SF) and lengths in feet (ft); uses OSHA 29 CFR 1926
+  Subpart P Type A/B/C excavation slopes, an IBC frost-line foundation check, and
+  ADA/IRC driveway & perimeter-grading references; English text and ANSI/ARCH
+  sheet sizes. Select it with `gh_00_standard` (RU / INT / US). The neutral core
+  still computes in SI; `Standard.volume_factor` converts the baked cartogram
+  cell tags, so `gh_01` shows CY under the US standard. (Grid/elevation inputs
+  remain in metres for now.)
+
 ## [Unreleased]
 
 ### Added

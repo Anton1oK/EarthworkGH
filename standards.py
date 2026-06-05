@@ -72,6 +72,10 @@ class Standard:
     regulations: tuple = ()
     checked_on = ""
 
+    # Volumes are computed in m3 internally; ``volume_factor`` converts m3 to the
+    # standard's display unit for the baked cell tags (1.0 keeps m3; US uses yd3).
+    volume_factor = 1.0
+
     def edition_stamp(self):
         """Editions + checked-on date for the provenance line (national text)."""
 
@@ -1041,9 +1045,548 @@ for _layer_method in (
     setattr(GenericStandard, _layer_method, _make_layer_override(_layer_method))
 
 
+class USStandard(GenericStandard):
+    """United States standard - imperial units (cubic yards, feet) and US codes.
+
+    Volumes are reported in cubic yards (CY), areas in square feet (SF), lengths
+    in feet (ft); excavation slopes use OSHA Type A/B/C; frost depth follows the
+    local frost line (IBC); driveway/accessibility grades reference ADA. Inherits
+    English layer names from GenericStandard. The analysis grid and elevation
+    inputs are still entered in metres (a deeper change); the imperial conversion
+    is applied to all reported quantities and the baked cell tags.
+    """
+
+    code = "US"
+    name = "United States (imperial)"
+    locale = "en-US"
+    allowed_grid_sides_m = ()
+    volume_label = "CY"
+    volume_factor = 1.307950619  # m3 -> cubic yards
+    regulations = (
+        "OSHA 29 CFR 1926 Subpart P",
+        "IBC 2021 (frost line)",
+        "IRC R401/R403",
+        "ADA / ICC A117.1",
+    )
+    checked_on = "2026-06"
+
+    # -- imperial conversions (internal SI -> display) ---------------------
+    def _v(self, cubic_metres):
+        return float(cubic_metres) * 1.307950619  # CY
+
+    def _a(self, square_metres):
+        return float(square_metres) * 10.763910417  # SF
+
+    def _l(self, metres):
+        return float(metres) * 3.280839895  # ft
+
+    # -- cartogram (imperial) ----------------------------------------------
+    def cartogram_report(self, result):
+        return "\n".join([
+            "Earthwork cut/fill plan (grid method)",
+            "Grid step: {:.1f} ft".format(self._l(result.grid_size_m)),
+            "Fill (+): {:.1f} CY".format(self._v(result.fill_m3)),
+            "Cut (-): {:.1f} CY".format(self._v(result.cut_m3)),
+            "Balance: {:.1f} CY".format(self._v(result.balance_m3)),
+            "Cells: {}".format(len(result.cells)),
+        ])
+
+    def earth_mass_table(self, result):
+        header = ("Column", "Fill, CY", "Cut, CY", "Balance, CY")
+        rows = [
+            (str(t.column), _format_m3(self._v(t.fill_m3)), _format_m3(self._v(t.cut_m3)),
+             _format_m3(self._v(t.fill_m3 - t.cut_m3)))
+            for t in result.column_totals
+        ]
+        rows.append(("Total", _format_m3(self._v(result.fill_m3)),
+                     _format_m3(self._v(result.cut_m3)), _format_m3(self._v(result.balance_m3))))
+        return QuantityTable(header=header, rows=tuple(rows))
+
+    # -- grading pad -------------------------------------------------------
+    def grade_pad_report(self, pad_elevation_m, slope_ratio, resolution_m, edited):
+        warnings = [
+            "Side slope {:.2f}H:1V set by user.".format(slope_ratio),
+            "Verify cut/fill slopes per OSHA 29 CFR 1926 Subpart P with the geotechnical report.",
+        ]
+        report = "\n".join([
+            "Grading pad",
+            "Pad elevation: {:.2f} ft".format(self._l(pad_elevation_m)),
+            "Side slope: {:.2f}H:1V".format(slope_ratio),
+            "Resample step: {:.2f} ft".format(self._l(resolution_m)),
+            "Grid nodes edited: {}".format(edited),
+        ])
+        return report, warnings
+
+    # -- pit slopes (OSHA) -------------------------------------------------
+    def slope_report(self, grid_size_m, columns, rows, slope_cells, min_slope_1_to,
+                     max_slope_1_to, hachure_count):
+        lines = [
+            "Excavation slopes",
+            "Analysis step: {:.2f} ft".format(self._l(grid_size_m)),
+            "Analysis cells: {} ({} x {})".format(columns * rows, columns, rows),
+            "Slope cells: {}".format(slope_cells),
+            "Threshold: steeper than {:.2f}H:1V".format(min_slope_1_to),
+        ]
+        if max_slope_1_to > 0.0:
+            lines.append("Steepest slope: {:.2f}H:1V".format(max_slope_1_to))
+        else:
+            lines.append("Steepest slope: flat or no data on the grid")
+        lines.append("Slope hachures: {}".format(hachure_count))
+        lines.append("Slopes are not certified: verify per OSHA 29 CFR 1926 "
+                     "Subpart P with soil type, water and surcharge.")
+        return "\n".join(lines)
+
+    # -- sections ----------------------------------------------------------
+    def section_report(self, length_m, station_count, cut_area_m2, fill_area_m2, has_proposed):
+        lines = [
+            "Section along line",
+            "Section length: {:.1f} ft".format(self._l(length_m)),
+            "Stations: {}".format(station_count),
+        ]
+        if has_proposed:
+            lines.append("Cut (section area): {:.1f} SF".format(self._a(cut_area_m2)))
+            lines.append("Fill (section area): {:.1f} SF".format(self._a(fill_area_m2)))
+        else:
+            lines.append("No proposed mesh: existing ground only.")
+        return "\n".join(lines)
+
+    def serial_section_table(self, result):
+        header = ("Section", "Dist, ft", "Cut, SF", "Fill, SF")
+        rows = [
+            (str(index + 1), "{:.1f}".format(self._l(distance)),
+             _format_m3(self._a(cut_area)), _format_m3(self._a(fill_area)))
+            for index, (distance, cut_area, fill_area) in enumerate(result.stations)
+        ]
+        rows.append(("Volume, CY", "", _format_m3(self._v(result.cut_volume)),
+                     _format_m3(self._v(result.fill_volume))))
+        return QuantityTable(header=header, rows=tuple(rows))
+
+    def serial_section_report(self, result, spacing_m):
+        return "\n".join([
+            "Cross-sections",
+            "Section spacing: {:.1f} ft".format(self._l(spacing_m)),
+            "Method: average end area",
+            "",
+            self.serial_section_table(result).render_text(),
+        ])
+
+    def serial_section_empty_report(self):
+        return "No section crosses the existing mesh."
+
+    # -- topsoil -----------------------------------------------------------
+    def topsoil_report(self, strip_depth_m, area_m2, volume_m3):
+        return "\n".join([
+            "Topsoil stripping",
+            "Strip depth: {:.2f} ft".format(self._l(strip_depth_m)),
+            "Strip area: {:.0f} SF".format(self._a(area_m2)),
+            "Topsoil volume: {:.1f} CY".format(self._v(volume_m3)),
+            "Stockpile topsoil for reuse and protect per the SWPPP / local code.",
+        ])
+
+    def topsoil_label(self, strip_depth_m, area_m2, volume_m3):
+        return "Topsoil strip\nh={:.2f} ft, A={:.0f} SF, V={:.1f} CY".format(
+            self._l(strip_depth_m), self._a(area_m2), self._v(volume_m3))
+
+    # -- ditch -------------------------------------------------------------
+    def ditch_invert_label(self, invert_z_m):
+        return "INV {:.1f}".format(self._l(invert_z_m))
+
+    def ditch_report(self, profile, bottom_width_m, side_slope, volume_m3, meters_per_unit):
+        lines = [
+            "Ditch / swale",
+            "Bottom width: {:.2f} ft".format(self._l(bottom_width_m)),
+            "Side slope: {:.2f}H:1V".format(side_slope),
+            "Depth: {:.2f}..{:.2f} ft".format(
+                self._l(profile.min_depth * meters_per_unit),
+                self._l(profile.max_depth * meters_per_unit)),
+            "Excavation volume: {:.1f} CY".format(self._v(volume_m3)),
+            "Invert marks: INV.",
+        ]
+        if profile.daylight_count:
+            lines.append("Warning: invert above ground at {} station(s) - lower the "
+                         "invert or add fill.".format(profile.daylight_count))
+        return "\n".join(lines)
+
+    # -- drainage / relief / contours --------------------------------------
+    def drainage_report(self, grid_size_m, flow_count, low_count, high_count):
+        lines = [
+            "Drainage and runoff",
+            "Grid step: {:.1f} ft".format(self._l(grid_size_m)),
+            "Flow paths: {}".format(flow_count),
+            "Local low points (ponding): {}".format(low_count),
+            "Local high points: {}".format(high_count),
+        ]
+        if low_count:
+            lines.append("Warning: possible ponding at {} point(s) - provide positive "
+                         "drainage.".format(low_count))
+        return "\n".join(lines)
+
+    def relief_report(self, grid_size_m, sample_count, max_slope_percent, arrow_count):
+        return "\n".join([
+            "Relief: slopes and spot elevations",
+            "Grid step: {:.1f} ft".format(self._l(grid_size_m)),
+            "Spot points: {}".format(sample_count),
+            "Slope arrows: {}".format(arrow_count),
+            "Steepest slope: {:.1f} %".format(max_slope_percent),
+        ])
+
+    def contour_report(self, interval_m, minor_count, major_count, levels_m):
+        low = min(levels_m) if levels_m else 0.0
+        high = max(levels_m) if levels_m else 0.0
+        return "\n".join([
+            "Proposed contours",
+            "Contour interval: {:.2f} ft".format(self._l(interval_m)),
+            "Contours: {} (index {})".format(minor_count + major_count, major_count),
+            "Elevation range: {:.2f}..{:.2f} ft".format(self._l(low), self._l(high)),
+        ])
+
+    # -- grading / blind area / driveway / mass haul -----------------------
+    def grading_report(self, point_count, datum_m, min_z_m, max_z_m):
+        return "\n".join([
+            "Proposed grading surface",
+            "Design spot elevations: {}".format(point_count),
+            "Datum (0.00): {:.2f} ft".format(self._l(datum_m)),
+            "Elevation range: {:.2f}..{:.2f} ft".format(self._l(min_z_m), self._l(max_z_m)),
+        ])
+
+    def blind_area_report(self, width_m, slope_percent, perimeter_m, area_m2):
+        return "\n".join([
+            "Foundation perimeter grading (apron)",
+            "Width: {:.2f} ft".format(self._l(width_m)),
+            "Slope away from building: {:.1f} %".format(slope_percent),
+            "Perimeter: {:.1f} ft, area: {:.0f} SF".format(self._l(perimeter_m), self._a(area_m2)),
+            "Grade away from the building >= 5% for the first 10 ft (IRC R401.3).",
+        ])
+
+    def mass_haul_report(self, balanced_m, platform_m, cut_m3, fill_m3):
+        return "\n".join([
+            "Balanced platform (0.00)",
+            "Zero-balance elevation: {:.2f} ft".format(self._l(balanced_m)),
+            "Chosen platform elevation: {:.2f} ft".format(self._l(platform_m)),
+            "At this elevation - cut: {:.1f} CY, fill: {:.1f} CY".format(
+                self._v(cut_m3), self._v(fill_m3)),
+            "Balance (cut-fill): {:.1f} CY".format(self._v(cut_m3 - fill_m3)),
+        ])
+
+    path_default_max_grade_percent = 12.0  # typical residential driveway max
+
+    def path_grade_label(self, grade_percent):
+        return "{:.1f}%".format(grade_percent)
+
+    def path_grade_report(self, profile, max_allowed_percent, compliant):
+        lines = [
+            "Driveway / path profile",
+            "Length: {:.1f} ft".format(self._l(profile.length)),
+            "Steepest grade: {:.1f} %".format(profile.max_abs_grade_percent),
+            "Max allowed grade: {:.1f} %".format(max_allowed_percent),
+            "Compliance: {}".format("OK" if compliant else "EXCEEDS max grade"),
+        ]
+        if not compliant:
+            lines.append("Grade exceeds the limit - revise the alignment or profile. "
+                         "(ADA accessible route <= 5%, ramp <= 8.33%.)")
+        return "\n".join(lines)
+
+    # -- bedding / backfill ------------------------------------------------
+    working_space_default = 0.6
+    bedding_thickness_default = 0.1
+    lift_thickness_default = 0.2
+
+    def backfill_schedule_table(self, estimate):
+        header = ("Lift", "Bottom, ft", "Top, ft", "Thick, ft", "Volume, CY")
+        rows = [
+            (str(layer.index), "{:.2f}".format(self._l(layer.bottom_m)),
+             "{:.2f}".format(self._l(layer.top_m)), "{:.2f}".format(self._l(layer.thickness_m)),
+             _format_m3(self._v(estimate.annulus_area_m2 * layer.thickness_m)))
+            for layer in estimate.layers
+        ]
+        rows.append(("Total", "", "", "", _format_m3(self._v(estimate.backfill_volume_m3))))
+        return QuantityTable(header=header, rows=tuple(rows))
+
+    def backfill_report(self, estimate, working_space_m, depth_m, bedding_thickness_m):
+        return "\n".join([
+            "Bedding and backfill",
+            "Working space: {:.2f} ft".format(self._l(working_space_m)),
+            "Excavation footprint (with working space): {:.0f} SF".format(
+                self._a(estimate.excavation_area_m2)),
+            "Bedding volume, h={:.2f} ft: {:.1f} CY".format(
+                self._l(bedding_thickness_m), self._v(estimate.bedding_volume_m3)),
+            "Backfill volume, h={:.2f} ft: {:.1f} CY".format(
+                self._l(depth_m), self._v(estimate.backfill_volume_m3)),
+            "Place backfill in compacted lifts (per spec / OSHA Subpart P).",
+            "",
+            self.backfill_schedule_table(estimate).render_text(),
+        ])
+
+    # -- sheet sizes (ANSI / ARCH) + title block ---------------------------
+    _sheet_sizes_mm = {
+        "ARCH A": (304.8, 228.6), "ARCH B": (457.2, 304.8), "ARCH C": (609.6, 457.2),
+        "ARCH D": (914.4, 609.6), "ARCH E": (1219.2, 914.4),
+        "ANSI A": (279.4, 215.9), "ANSI B": (431.8, 279.4), "ANSI C": (558.8, 431.8),
+        "ANSI D": (863.6, 558.8), "ANSI E": (1117.6, 863.6),
+        "A4": (210.0, 297.0), "A3": (420.0, 297.0), "A2": (594.0, 420.0),
+        "A1": (841.0, 594.0), "A0": (1189.0, 841.0),
+    }
+
+    def sheet_size_mm(self, code):
+        return self._sheet_sizes_mm.get(str(code).upper(), (914.4, 609.6))  # ARCH D
+
+    def titleblock_rows(self, values):
+        return (
+            ("Project", values.get("object", "")),
+            ("Sheet title", values.get("title", "")),
+            ("Phase / Scale", values.get("stage_scale", "")),
+            ("Sheet", values.get("sheet_number", "")),
+            ("Drawn by, date", values.get("author", "")),
+        )
+
+    # -- site area / lot coverage ------------------------------------------
+    _tep_labels = {
+        "building": "Building footprint",
+        "paving": "Paving (drives, walks)",
+        "other": "Other (decks, patios)",
+        "free": "Landscape (pervious)",
+    }
+
+    def tep_table(self, plot_area_m2, item_areas):
+        items = area_balance(plot_area_m2, item_areas, free_key="free")
+        header = ("Item", "Area, SF", "%")
+        rows = [("Lot area", "{:.0f}".format(self._a(plot_area_m2)), "100.0")]
+        rows += [
+            (self._tep_labels.get(item.key, item.key), "{:.0f}".format(self._a(item.area_m2)),
+             "{:.1f}".format(item.percent))
+            for item in items
+        ]
+        return QuantityTable(header=header, rows=tuple(rows))
+
+    def tep_report(self, table):
+        return "Site area / lot coverage\n" + table.render_text()
+
+    # -- frost-depth foundation check (IBC) --------------------------------
+    def assess_foundation_frost(self, base_depth_m, frost_depth_m=None, soil_class=None,
+                                freezing_index=None, thermal_factor=1.1, heaving=True,
+                                groundwater=False, geotech_confirmed=False):
+        base_depth_m = float(base_depth_m)
+        design_frost = None if frost_depth_m is None else float(frost_depth_m)
+        if design_frost is None and freezing_index is not None:
+            design_frost = float(thermal_factor) * frost_depth(
+                self.frost_d0(soil_class), freezing_index)
+
+        notes = []
+        adequate = False
+        if design_frost is None:
+            status = "REVIEW REQUIRED (no frost depth)"
+            notes.append("Enter the local frost line depth (IBC / local code), or a "
+                         "freezing index and soil class.")
+        elif not heaving:
+            status = "Non-frost-susceptible soil - depth governed by bearing, not frost"
+            adequate = True
+        elif base_depth_m + 1e-9 >= design_frost:
+            status = "Footing below the frost line"
+            adequate = True
+        else:
+            status = ("FOOTING ABOVE FROST LINE ({:.2f} < {:.2f} ft) - extend below the "
+                      "frost depth or mitigate".format(self._l(base_depth_m), self._l(design_frost)))
+
+        if groundwater:
+            notes.append("Groundwater increases frost heave - account for it.")
+        if not geotech_confirmed:
+            adequate = False
+            notes.append("Geotechnical data not confirmed (geotech_confirmed=false).")
+        notes.append("This tool does not certify the foundation. Decide per IBC 1809 / "
+                     "the local frost line with the geotechnical report.")
+        return FoundationCheck(base_depth_m, design_frost, status, adequate, tuple(notes))
+
+    def foundation_check_report(self, check, heaving, groundwater, geotech_confirmed):
+        def yes_no(flag):
+            return "yes" if flag else "no"
+
+        lines = [
+            "Foundation frost-depth check",
+            "Footing depth: {:.2f} ft".format(self._l(check.base_depth_m)),
+            "Design frost line: {}".format(
+                "not set" if check.frost_depth_m is None
+                else "{:.2f} ft".format(self._l(check.frost_depth_m))),
+            "Result: {}".format(check.status),
+            "",
+            "Inputs:",
+            " - Frost-susceptible soil: {}".format(yes_no(heaving)),
+            " - Groundwater: {}".format(yes_no(groundwater)),
+            " - Geotech confirmed: {}".format(yes_no(geotech_confirmed)),
+            "",
+            "Notes:",
+        ]
+        lines.extend(" - {}".format(note) for note in check.notes)
+        return "\n".join(lines)
+
+    def foundation_drain_report(self, offset_m, depth_below_m, length_m, invert_m):
+        return "\n".join([
+            "Foundation perimeter (footing) drain",
+            "Offset from wall: {:.2f} ft".format(self._l(offset_m)),
+            "Depth below footing/reference: {:.2f} ft".format(self._l(depth_below_m)),
+            "Drain invert elevation: {:.2f} ft".format(self._l(invert_m)),
+            "Drain length: {:.1f} ft".format(self._l(length_m)),
+            "Slope the drain to outfall at >= 0.5% (IRC R405).",
+        ])
+
+    # -- earthwork accounting ----------------------------------------------
+    _bulking = {
+        1: (1.15, 1.03), 2: (1.12, 1.03), 3: (1.18, 1.05),
+        4: (1.25, 1.08), 5: (1.30, 1.10), 6: (1.20, 1.05),
+    }
+
+    def soil_balance_report(self, balance, soil_class, initial_bulking, residual_bulking):
+        lines = [
+            "Earthwork soil balance",
+            "Soil: {} (class {})".format(
+                self.soil_name(soil_class), "-" if not soil_class else soil_class),
+            "Swell {:.2f}; shrinkage {:.2f}".format(initial_bulking, residual_bulking),
+            "Cut (bank): {:.1f} CY".format(self._v(balance.cut_bank_m3)),
+            "Fill (compacted): {:.1f} CY".format(self._v(balance.fill_compacted_m3)),
+            "Bank needed for fill: {:.1f} CY".format(self._v(balance.bank_for_fill_m3)),
+        ]
+        if balance.export_bank_m3 > 1e-9:
+            lines.append("Export: {:.1f} CY bank ({:.1f} CY loose)".format(
+                self._v(balance.export_bank_m3), self._v(balance.export_loose_m3)))
+        elif balance.import_bank_m3 > 1e-9:
+            lines.append("Import: {:.1f} CY bank ({:.1f} CY loose)".format(
+                self._v(balance.import_bank_m3), self._v(balance.import_loose_m3)))
+        else:
+            lines.append("Balanced (no import/export).")
+        lines.append("Haul (loose): {:.1f} CY".format(self._v(balance.cut_loose_m3)))
+        return "\n".join(lines)
+
+    _bill_labels = {
+        "topsoil": "Strip topsoil",
+        "cut": "Excavation (cut)",
+        "fill": "Embankment (fill)",
+        "backfill": "Backfill",
+        "ditch": "Ditch / swale excavation",
+    }
+
+    def bill_of_quantities_table(self, items):
+        header = ("Work item", "Volume, CY")
+        rows = [(item.name, _format_m3(self._v(item.volume_m3))) for item in items]
+        total = sum(item.volume_m3 for item in items)
+        rows.append(("Total", _format_m3(self._v(total))))
+        return QuantityTable(header=header, rows=tuple(rows))
+
+    # -- temporary slope (OSHA Type A/B/C) ---------------------------------
+    _soils = {
+        1: "OSHA Type A (cohesive, stable)",
+        2: "OSHA Type B (medium)",
+        3: "OSHA Type C (granular / unstable)",
+        4: "Type C (conservative)",
+        5: "Type C (conservative)",
+        6: "Type C (conservative)",
+    }
+    # Max allowable slope H:V for excavations up to 20 ft (~6.10 m),
+    # OSHA 1926 Subpart P, Appendix B: A 3/4:1, B 1:1, C 1-1/2:1.
+    _temp_slope_table = {
+        1: ((6.10, 0.75),),
+        2: ((6.10, 1.0),),
+        3: ((6.10, 1.5),),
+        4: ((6.10, 1.5),),
+        5: ((6.10, 1.5),),
+        6: ((6.10, 1.5),),
+    }
+
+    def soil_name(self, soil_class):
+        return self._soils.get(soil_class, "unspecified") if soil_class else "unspecified"
+
+    def assess_temporary_slope(self, proposed_1_to, depth_m, soil_class=None,
+                               allowable_override_1_to=None, groundwater=False,
+                               surcharge=False, geotech_confirmed=False):
+        proposed_1_to = float(proposed_1_to)
+        depth_m = float(depth_m)
+        soil_class = None if soil_class is None else int(soil_class)
+        indicative = (
+            None if soil_class is None
+            else self.indicative_allowable_slope(soil_class, depth_m)
+        )
+        governing = (
+            float(allowable_override_1_to)
+            if allowable_override_1_to is not None
+            else indicative
+        )
+
+        notes = []
+        review_required = False
+        if depth_m > 6.096:
+            review_required = True
+            notes.append("Excavation over 20 ft - tabulated slopes do not apply; a "
+                         "registered PE must design the protective system (OSHA 1926.652).")
+        if groundwater:
+            review_required = True
+            notes.append("Groundwater at the excavation - dewatering and analysis "
+                         "required; tabulated slopes do not apply.")
+        if surcharge:
+            review_required = True
+            notes.append("Surcharge near the edge - account for the load and analyze.")
+        if governing is None:
+            review_required = True
+            notes.append("Allowable slope undefined: set soil_class (OSHA Type) or "
+                         "allowable_slope_1_to from the geotechnical report.")
+
+        within_allowable = False
+        if review_required:
+            status = "REVIEW REQUIRED (engineering / soils)"
+        elif proposed_1_to + 1e-9 >= governing:
+            status = "Within allowable (confirm with soils)"
+            within_allowable = True
+        else:
+            status = "TOO STEEP - flatter than allowable {:.2f}H:1V".format(governing)
+
+        if not geotech_confirmed:
+            within_allowable = False
+            notes.append("Geotechnical data not confirmed (geotech_confirmed=false).")
+
+        notes.append("This tool does not certify the slope. Decide per OSHA 29 CFR 1926 "
+                     "Subpart P with soils and design.")
+
+        return SlopeCheck(
+            soil_class=soil_class,
+            soil_name=self.soil_name(soil_class),
+            depth_m=depth_m,
+            proposed_1_to=proposed_1_to,
+            indicative_allowable_1_to=indicative,
+            governing_allowable_1_to=governing,
+            status=status,
+            within_allowable=within_allowable,
+            notes=tuple(notes),
+        )
+
+    def slope_check_report(self, check, groundwater, surcharge, geotech_confirmed):
+        def yes_no(flag):
+            return "yes" if flag else "no"
+
+        def fmt_slope(value):
+            return "undefined" if value is None else "{:.2f}H:1V".format(value)
+
+        lines = [
+            "Temporary excavation slope check",
+            "Soil: {} (class {})".format(
+                check.soil_name, "-" if check.soil_class is None else check.soil_class),
+            "Excavation depth: {:.2f} ft".format(self._l(check.depth_m)),
+            "Proposed slope: {:.2f}H:1V".format(check.proposed_1_to),
+            "Indicative allowable (table): {}".format(fmt_slope(check.indicative_allowable_1_to)),
+            "Governing allowable: {}".format(fmt_slope(check.governing_allowable_1_to)),
+            "Result: {}".format(check.status),
+            "",
+            "Input checklist:",
+            " - Groundwater at excavation: {}".format(yes_no(groundwater)),
+            " - Surcharge near edge: {}".format(yes_no(surcharge)),
+            " - Geotech confirmed: {}".format(yes_no(geotech_confirmed)),
+            "",
+            "Notes:",
+        ]
+        lines.extend(" - {}".format(note) for note in check.notes)
+        return "\n".join(lines)
+
+
 RU = RussianStandard()
 INT = GenericStandard()
-STANDARDS = {RU.code: RU, INT.code: INT}
+US = USStandard()
+STANDARDS = {RU.code: RU, INT.code: INT, US.code: US}
 DEFAULT = RU
 _ACTIVE_CODE = None  # process fallback when scriptcontext.sticky is unavailable
 
