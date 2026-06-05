@@ -28,6 +28,9 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
 ## [Unreleased]
 
 ### Added
+- The wiki is now versioned in `wiki/` and **auto-published** to the GitHub wiki
+  on push to `main` (`.github/workflows/publish-wiki.yml`); a test
+  (`tests/test_wiki.py`) keeps the Component Reference in sync with the components.
 - Drop-down (value-list) inputs. The remote loader attaches a drop-down of the
   repo's components to its first input (leave it empty and recompute to get the
   list), and drop-downs for inputs that declare options - `standard_code`
