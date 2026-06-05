@@ -57,5 +57,11 @@ inputs are single-value (item access).
 
 Every output is traceable to a tool version plus the exact regulation editions a
 standard encodes, e.g.
-`Earthwork Studio GH v0.8.0 - standard RU: ГОСТ 21.508-2020, СП 45.13330.2017,
+`Earthwork Studio GH v0.9.1 - standard RU: ГОСТ 21.508-2020, СП 45.13330.2017,
 ...; checked 2026-06`. See [Standards › Provenance](Standards#provenance).
+
+---
+
+_This wiki is generated from `wiki/` in the
+[repository](https://github.com/Anton1oK/EarthworkGH/tree/main/wiki) and
+published automatically — edit the pages there, not here._
