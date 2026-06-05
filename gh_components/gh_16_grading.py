@@ -67,9 +67,9 @@ if len(design_points) < 1:
     raise ValueError("The design polyline has no vertices.")
 
 _grid = globals().get("grid_size_m")
-grid_size_m = 1.0 if _grid is None else float(_grid)
+grid_size_m = (1.0 if _grid is None else float(_grid)) * STANDARD.input_length_factor
 spacing = grid_size_m * units_per_meter
-datum_m = 0.0 if globals().get("datum_m") is None else float(globals().get("datum_m"))
+datum_m = (0.0 if globals().get("datum_m") is None else float(globals().get("datum_m"))) * STANDARD.input_length_factor
 power = 2.0 if globals().get("power") is None else float(globals().get("power"))
 
 if boundary_curve is not None:

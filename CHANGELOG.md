@@ -2,6 +2,17 @@
 
 All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
 
+## [0.9.1] - 2026-06-05
+
+### Added
+- **Imperial inputs under US.** Numeric length inputs (grid sizes, depths, widths,
+  elevations) are entered in **feet** when the US standard is active, converted
+  internally via `Standard.input_length_factor` (1.0 = metres; US = 0.3048).
+  Volume/area inputs (`gh_15`, `gh_22`) stay SI for chaining.
+- **Standard-aware drop-downs.** `Standard.input_options(name)` lets a standard
+  override an input's drop-down options; the remote loader uses it. Under US,
+  `soil_class` shows OSHA Type A/B/C and `sheet` shows ANSI/ARCH.
+
 ## [0.9.0] - 2026-06-05
 
 ### Added

@@ -51,10 +51,10 @@ def _as_bool(value):
 
 if globals().get("base_depth_m") is None:
     raise ValueError("Connect the foundation base depth below grade in metres.")
-base_depth_m = float(globals().get("base_depth_m"))
+base_depth_m = float(globals().get("base_depth_m")) * STANDARD.input_length_factor
 
 _fd = globals().get("frost_depth_m")
-frost_depth_m = None if _fd is None else float(_fd)
+frost_depth_m = None if _fd is None else float(_fd) * STANDARD.input_length_factor
 _soil = globals().get("soil_class")
 soil_class = None if _soil is None else int(_soil)
 _mt = globals().get("freezing_index")

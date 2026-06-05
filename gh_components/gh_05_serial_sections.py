@@ -73,9 +73,9 @@ units_per_meter = rhino_adapter.document_units_per_meter()
 meters_per_unit = 1.0 / units_per_meter
 
 _spacing = globals().get("spacing_m")
-spacing_m = 5.0 if _spacing is None else float(_spacing)
+spacing_m = (5.0 if _spacing is None else float(_spacing)) * STANDARD.input_length_factor
 _half = globals().get("half_width_m")
-half_width_m = 10.0 if _half is None else float(_half)
+half_width_m = (10.0 if _half is None else float(_half)) * STANDARD.input_length_factor
 _divisions = globals().get("divisions")
 divisions = 30 if _divisions is None else max(2, int(_divisions))
 

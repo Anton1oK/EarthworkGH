@@ -76,6 +76,18 @@ class Standard:
     # standard's display unit for the baked cell tags (1.0 keeps m3; US uses yd3).
     volume_factor = 1.0
 
+    # Numeric length inputs (grid sizes, depths, widths, elevations) are
+    # multiplied by this to reach metres for the core (1.0 = metres; US = feet).
+    input_length_factor = 1.0
+
+    def input_options(self, input_name):
+        """Standard-specific drop-down options for an input, or None to use the
+        component's declared default options. Returns a list of
+        ``(display, expression)`` pairs (expression is the value-list value).
+        """
+
+        return None
+
     def edition_stamp(self):
         """Editions + checked-on date for the provenance line (national text)."""
 
@@ -1062,6 +1074,7 @@ class USStandard(GenericStandard):
     allowed_grid_sides_m = ()
     volume_label = "CY"
     volume_factor = 1.307950619  # m3 -> cubic yards
+    input_length_factor = 0.3048  # length inputs are entered in feet
     regulations = (
         "OSHA 29 CFR 1926 Subpart P",
         "IBC 2021 (frost line)",
@@ -1079,6 +1092,17 @@ class USStandard(GenericStandard):
 
     def _l(self, metres):
         return float(metres) * 3.280839895  # ft
+
+    def input_options(self, input_name):
+        """US drop-downs: OSHA soil types for soil_class, ANSI/ARCH for sheet."""
+        if input_name == "soil_class":
+            return [("Type A", "1"), ("Type B", "2"), ("Type C", "3")]
+        if input_name == "sheet":
+            return [
+                ("ARCH D", '"ARCH D"'), ("ARCH C", '"ARCH C"'), ("ARCH E", '"ARCH E"'),
+                ("ANSI D", '"ANSI D"'), ("ANSI B", '"ANSI B"'),
+            ]
+        return None
 
     # -- cartogram (imperial) ----------------------------------------------
     def cartogram_report(self, result):

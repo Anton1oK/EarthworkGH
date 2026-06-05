@@ -64,9 +64,9 @@ units_per_meter = units_info.units_per_meter
 meters_per_unit = units_info.meters_per_unit
 
 _depth = globals().get("strip_depth_m")
-strip_depth_m = 0.2 if _depth is None else float(_depth)
+strip_depth_m = (0.2 if _depth is None else float(_depth)) * STANDARD.input_length_factor
 _spacing = globals().get("hatch_spacing_m")
-hatch_spacing_m = 1.0 if _spacing is None else float(_spacing)
+hatch_spacing_m = (1.0 if _spacing is None else float(_spacing)) * STANDARD.input_length_factor
 
 _polygon = earthwork_core.normalize_polygon(
     rhino_adapter.curve_polygon_xy(strip_boundary)

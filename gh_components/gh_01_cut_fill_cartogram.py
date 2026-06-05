@@ -83,7 +83,7 @@ if proposed is None:
 _grid = globals().get("grid_size_m")
 _samples = globals().get("samples_per_side")
 _flat = globals().get("flat_tolerance_m")
-grid_size = 20.0 if _grid is None else float(_grid)
+grid_size = (20.0 if _grid is None else float(_grid)) * STANDARD.input_length_factor
 sample_count = 6 if _samples is None else int(_samples)
 # Height differences (in metres) below this read as flat, not cut/fill. Raise it
 # if sampling noise between two near-identical meshes still paints flat ground.

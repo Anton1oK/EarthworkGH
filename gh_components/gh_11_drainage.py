@@ -59,7 +59,7 @@ if terrain is None:
 boundary_curve = rhino_adapter.coerce_curve(globals().get("boundary"))
 
 _grid = globals().get("grid_size_m")
-grid_size_m = 2.0 if _grid is None else float(_grid)
+grid_size_m = (2.0 if _grid is None else float(_grid)) * STANDARD.input_length_factor
 grid = rhino_adapter.analysis_grid(terrain, boundary_curve, grid_size_m)
 units_per_meter = grid.units_per_meter
 _seed = globals().get("seed_every")

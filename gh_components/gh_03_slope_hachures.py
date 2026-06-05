@@ -62,7 +62,7 @@ boundary_curve = rhino_adapter.coerce_curve(globals().get("boundary"))
 units_per_meter = rhino_adapter.document_units_per_meter()
 
 _grid = globals().get("grid_size_m")
-grid_size_m = 1.0 if _grid is None else float(_grid)
+grid_size_m = (1.0 if _grid is None else float(_grid)) * STANDARD.input_length_factor
 spacing = grid_size_m * units_per_meter
 
 _min_slope = globals().get("min_slope_1_to")
@@ -71,7 +71,7 @@ min_steepness = 1.0 / min_slope_1_to if min_slope_1_to > 0.0 else 0.2
 
 _hachure = globals().get("hachure_length_m")
 hachure_length = (
-    0.8 * spacing if _hachure is None else float(_hachure) * units_per_meter
+    0.8 * spacing if _hachure is None else float(_hachure) * STANDARD.input_length_factor * units_per_meter
 )
 
 # Analysis region: the boundary's extent when given, otherwise the whole mesh.
