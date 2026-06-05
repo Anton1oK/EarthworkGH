@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import unittest
 
 from earthwork_core import (
@@ -77,6 +78,72 @@ class StandardRegistryTests(unittest.TestCase):
             grid_size_m=20.0,
         )
         self.assertIn("Earthwork cut/fill plan", intl.cartogram_report(result))
+
+
+class USStandardTests(unittest.TestCase):
+    def setUp(self):
+        self.us = standards.get_standard("US")
+
+    def _result(self):
+        return calculate_cut_fill(
+            boundary=((0.0, 0.0), (20.0, 0.0), (20.0, 20.0), (0.0, 20.0)),
+            existing_z=lambda _x, _y: 0.0, proposed_z=lambda _x, _y: 0.5,
+            grid_size_m=20.0,
+        )
+
+    def test_registered_and_imperial(self):
+        self.assertIn("US", [code for code, _n in standards.available_standards()])
+        self.assertEqual(self.us.volume_label, "CY")
+        self.assertAlmostEqual(self.us.volume_factor, 1.307950619, places=6)
+
+    def test_cartogram_reports_cubic_yards(self):
+        report = self.us.cartogram_report(self._result())
+        self.assertIn("CY", report)
+        self.assertIn("261.6 CY", report)  # 200 m3 fill -> 261.6 CY
+        self.assertEqual(self.us.earth_mass_table(self._result()).header[1], "Fill, CY")
+
+    def test_osha_slope_table(self):
+        self.assertEqual(self.us.indicative_allowable_slope(1, 3.0), 0.75)  # Type A
+        self.assertEqual(self.us.indicative_allowable_slope(2, 3.0), 1.0)   # Type B
+        self.assertEqual(self.us.indicative_allowable_slope(3, 3.0), 1.5)   # Type C
+        self.assertIsNone(self.us.indicative_allowable_slope(3, 7.0))       # > 20 ft
+
+    def test_slope_check_too_steep_and_deep(self):
+        steep = self.us.assess_temporary_slope(0.5, 3.0, soil_class=3, geotech_confirmed=True)
+        self.assertFalse(steep.within_allowable)
+        self.assertIn("TOO STEEP", steep.status)
+        deep = self.us.assess_temporary_slope(2.0, 7.0, soil_class=3, geotech_confirmed=True)
+        self.assertIn("REVIEW REQUIRED", deep.status)
+
+    def test_never_certifies_without_geotech(self):
+        check = self.us.assess_temporary_slope(2.0, 3.0, soil_class=3, geotech_confirmed=False)
+        self.assertFalse(check.within_allowable)
+
+    def test_foundation_below_frost_ok_when_confirmed(self):
+        check = self.us.assess_foundation_frost(
+            base_depth_m=1.2, frost_depth_m=1.07, geotech_confirmed=True
+        )
+        self.assertTrue(check.adequate)
+        self.assertIn("below the frost line", check.status)
+
+    def test_reports_are_english_no_cyrillic(self):
+        result = self._result()
+        balance = soil_balance(100.0, 50.0)
+        check = self.us.assess_temporary_slope(2.0, 3.0, soil_class=3, geotech_confirmed=True)
+        text = "".join([
+            self.us.cartogram_report(result),
+            self.us.soil_balance_report(balance, 4, 1.25, 1.08),
+            self.us.slope_check_report(check, False, False, True),
+            self.us.topsoil_report(0.2, 100.0, 20.0),
+            self.us.tep_report(self.us.tep_table(1000.0, [("building", 200.0)])),
+            self.us.foundation_check_report(
+                self.us.assess_foundation_frost(1.2, frost_depth_m=1.07, geotech_confirmed=True),
+                True, False, True),
+        ])
+        self.assertIsNone(re.search("[Ѐ-ӿ]", text))
+
+    def test_edition_stamp_lists_osha(self):
+        self.assertIn("OSHA", self.us.edition_stamp())
 
 
 class CartogramTextTests(unittest.TestCase):

@@ -125,7 +125,7 @@ result = earthwork_core.calculate_cut_fill(
     vertex_mark_tags,
 ) = rhino_adapter.cartogram_geometry(
     result, proposed_sampler, meters_per_unit=meters_per_unit,
-    volume_label=STANDARD.volume_label,
+    volume_label=STANDARD.volume_label, volume_factor=STANDARD.volume_factor,
 )
 
 column_totals = list(result.column_totals)
