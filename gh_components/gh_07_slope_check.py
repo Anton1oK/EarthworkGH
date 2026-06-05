@@ -68,7 +68,7 @@ geotech_confirmed = _as_bool(globals().get("geotech_confirmed"))
 
 check = STANDARD.assess_temporary_slope(
     proposed_1_to=float(_proposed),
-    depth_m=float(_depth),
+    depth_m=float(_depth) * STANDARD.input_length_factor,
     soil_class=soil_class,
     allowable_override_1_to=allowable_override,
     groundwater=groundwater,

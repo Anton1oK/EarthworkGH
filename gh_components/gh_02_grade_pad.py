@@ -66,7 +66,8 @@ if globals().get("pad_elevation_m") is None:
 _ratio = globals().get("slope_ratio")
 ratio = 1.5 if _ratio is None else float(_ratio)
 _resolution = globals().get("resolution_m")
-resolution_m = 0.5 if _resolution is None else float(_resolution)
+resolution_m = (0.5 if _resolution is None else float(_resolution)) * STANDARD.input_length_factor
+pad_elevation_m = float(pad_elevation_m) * STANDARD.input_length_factor
 
 # The mesh is in document units (e.g. millimetres); the pad elevation and grid
 # resolution are given in metres, so convert them to document units. The slope

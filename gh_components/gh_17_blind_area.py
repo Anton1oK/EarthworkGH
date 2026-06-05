@@ -74,8 +74,8 @@ def _number(name, default):
     return default if value is None else float(value)
 
 
-top_elevation_m = _number("top_elevation_m", 0.0)
-width_m = _number("width_m", 1.0)
+top_elevation_m = _number("top_elevation_m", 0.0) * STANDARD.input_length_factor
+width_m = _number("width_m", 1.0) * STANDARD.input_length_factor
 slope_percent = _number("slope_percent", 3.0)
 
 _inner_xy = rhino_adapter.curve_polygon_xy(footprint)

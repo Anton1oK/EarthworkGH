@@ -67,9 +67,10 @@ def _number(name, default):
     return default if value is None else float(value)
 
 
-offset_m = _number("offset_m", 0.4)
-depth_below_m = _number("depth_below_m", 0.3)
-reference_m = _number("reference_elevation_m", 0.0)
+_LEN = STANDARD.input_length_factor
+offset_m = _number("offset_m", 0.4) * _LEN
+depth_below_m = _number("depth_below_m", 0.3) * _LEN
+reference_m = _number("reference_elevation_m", 0.0) * _LEN
 invert_m = reference_m - depth_below_m
 
 drain_curve = None

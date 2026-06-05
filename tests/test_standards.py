@@ -145,6 +145,19 @@ class USStandardTests(unittest.TestCase):
     def test_edition_stamp_lists_osha(self):
         self.assertIn("OSHA", self.us.edition_stamp())
 
+    def test_imperial_input_factor(self):
+        self.assertAlmostEqual(self.us.input_length_factor, 0.3048, places=4)
+        self.assertEqual(standards.get_standard("RU").input_length_factor, 1.0)
+        self.assertEqual(standards.get_standard("INT").input_length_factor, 1.0)
+
+    def test_input_options_are_standard_aware(self):
+        soils = self.us.input_options("soil_class")
+        self.assertEqual([display for display, _e in soils], ["Type A", "Type B", "Type C"])
+        self.assertEqual([expr for _d, expr in soils], ["1", "2", "3"])  # values stay 1-3
+        self.assertTrue(any(display == "ARCH D" for display, _e in self.us.input_options("sheet")))
+        self.assertIsNone(self.us.input_options("grid_size_m"))
+        self.assertIsNone(standards.get_standard("RU").input_options("soil_class"))
+
 
 class CartogramTextTests(unittest.TestCase):
     def _result(self, grid_size_m):

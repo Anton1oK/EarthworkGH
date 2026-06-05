@@ -244,13 +244,25 @@ else:
         # Sockets are in place - run the component and surface its outputs.
         _execute_component(_component_path, _component_source, component_outputs)
         # Offer drop-downs: components on the first input, plus any input that
-        # declares options (a 5th element in its COMPONENT_INPUTS spec).
+        # declares options (a 5th element in its COMPONENT_INPUTS spec). The
+        # active standard may override the options (e.g. US soil types / sheets).
         if "ghenv" in globals() and hasattr(gh_component_setup, "schedule_value_lists"):
+            try:
+                import standards as _standards
+                _active_std = _standards.get_standard()
+            except Exception:
+                _active_std = None
             _vl_specs = [(0, gh_component_setup.value_list_items(_component_names, True))]
             for _spec in component_inputs:
                 if len(_spec) >= 5 and _spec[4]:
-                    _as_string = _spec[1] in ("string", "text", "str")
-                    _vl_specs.append(
-                        (_spec[0], gh_component_setup.value_list_items(_spec[4], _as_string))
-                    )
+                    _opts = None
+                    if _active_std is not None:
+                        try:
+                            _opts = _active_std.input_options(_spec[0])
+                        except Exception:
+                            _opts = None
+                    if not _opts:
+                        _as_string = _spec[1] in ("string", "text", "str")
+                        _opts = gh_component_setup.value_list_items(_spec[4], _as_string)
+                    _vl_specs.append((_spec[0], _opts))
             gh_component_setup.schedule_value_lists(ghenv, _vl_specs)

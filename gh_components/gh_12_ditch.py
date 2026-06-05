@@ -80,9 +80,9 @@ def _number(name, default):
     return default if value is None else float(value)
 
 
-depth_m = _number("depth_m", 0.5)
+depth_m = _number("depth_m", 0.5) * STANDARD.input_length_factor
 _start = globals().get("start_invert_m")
-bottom_width_m = _number("bottom_width_m", 0.4)
+bottom_width_m = _number("bottom_width_m", 0.4) * STANDARD.input_length_factor
 side_slope = _number("side_slope", 1.5)
 slope_percent = _number("longitudinal_slope_percent", 0.0)
 divisions = max(2, int(_number("divisions", 30)))
@@ -110,7 +110,7 @@ station_xy = [(d, x, y) for d, x, y, _gz, _pz in _stations]
 profile = earthwork_core.ditch_profile(
     ground_stations,
     depth=depth_m * units_per_meter,
-    start_invert=None if _start is None else float(_start) * units_per_meter,
+    start_invert=None if _start is None else float(_start) * STANDARD.input_length_factor * units_per_meter,
     longitudinal_slope=slope_percent / 100.0,
 )
 excavation_volume_m3 = (

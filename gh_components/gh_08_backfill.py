@@ -65,13 +65,13 @@ units_info = rhino_adapter.document_unit_info()  # read model units before volum
 units_per_meter = units_info.units_per_meter
 meters_per_unit = units_info.meters_per_unit
 
-depth_m = float(globals().get("depth_m"))
+depth_m = float(globals().get("depth_m")) * STANDARD.input_length_factor
 _ws = globals().get("working_space_m")
-working_space_m = STANDARD.working_space_default if _ws is None else float(_ws)
+working_space_m = STANDARD.working_space_default if _ws is None else float(_ws) * STANDARD.input_length_factor
 _bed = globals().get("bedding_thickness_m")
-bedding_thickness_m = STANDARD.bedding_thickness_default if _bed is None else float(_bed)
+bedding_thickness_m = STANDARD.bedding_thickness_default if _bed is None else float(_bed) * STANDARD.input_length_factor
 _lift = globals().get("lift_thickness_m")
-lift_thickness_m = STANDARD.lift_thickness_default if _lift is None else float(_lift)
+lift_thickness_m = STANDARD.lift_thickness_default if _lift is None else float(_lift) * STANDARD.input_length_factor
 
 _polygon = earthwork_core.normalize_polygon(
     rhino_adapter.curve_polygon_xy(structure_boundary)

@@ -38,9 +38,12 @@ if PROJECT_FOLDER and PROJECT_FOLDER not in sys.path:
 
 import earthwork_core
 import rhino_adapter
+import standards
 
 earthwork_core = importlib.reload(earthwork_core)
 rhino_adapter = importlib.reload(rhino_adapter)
+standards = importlib.reload(standards)
+STANDARD = standards.get_standard()
 
 
 def _as_bool(value):
@@ -63,7 +66,7 @@ units_per_meter = rhino_adapter.document_units_per_meter()
 meters_per_unit = 1.0 / units_per_meter
 
 _grid = globals().get("grid_size_m")
-grid_size_m = 2.0 if _grid is None else float(_grid)
+grid_size_m = (2.0 if _grid is None else float(_grid)) * STANDARD.input_length_factor
 recenter = _as_bool(globals().get("recenter"))
 _path_value = globals().get("file_path")
 file_path = None if not _path_value else str(getattr(_path_value, "Value", _path_value))

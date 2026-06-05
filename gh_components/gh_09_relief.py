@@ -60,13 +60,13 @@ if terrain is None:
 boundary_curve = rhino_adapter.coerce_curve(globals().get("boundary"))
 
 _grid = globals().get("grid_size_m")
-grid_size_m = 5.0 if _grid is None else float(_grid)
+grid_size_m = (5.0 if _grid is None else float(_grid)) * STANDARD.input_length_factor
 grid = rhino_adapter.analysis_grid(terrain, boundary_curve, grid_size_m)
 units_per_meter = grid.units_per_meter
 meters_per_unit = grid.meters_per_unit
 
 _arrow = globals().get("arrow_length_m")
-arrow_length = 0.6 * grid.spacing if _arrow is None else float(_arrow) * units_per_meter
+arrow_length = 0.6 * grid.spacing if _arrow is None else float(_arrow) * STANDARD.input_length_factor * units_per_meter
 _min_pct = globals().get("min_slope_percent")
 min_steepness = 0.0 if _min_pct is None else float(_min_pct) / 100.0
 

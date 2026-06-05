@@ -60,7 +60,7 @@ if centerline is None:
 
 units_per_meter = rhino_adapter.document_units_per_meter()
 
-width_m = 3.0 if globals().get("width_m") is None else float(globals().get("width_m"))
+width_m = (3.0 if globals().get("width_m") is None else float(globals().get("width_m"))) * STANDARD.input_length_factor
 _max = globals().get("max_grade_percent")
 max_allowed = STANDARD.path_default_max_grade_percent if _max is None else float(_max)
 

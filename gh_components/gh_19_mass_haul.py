@@ -55,7 +55,7 @@ if existing is None:
 boundary_curve = rhino_adapter.coerce_curve(globals().get("boundary"))
 
 _grid_size = globals().get("grid_size_m")
-grid_size_m = 2.0 if _grid_size is None else float(_grid_size)
+grid_size_m = (2.0 if _grid_size is None else float(_grid_size)) * STANDARD.input_length_factor
 grid = rhino_adapter.analysis_grid(existing, boundary_curve, grid_size_m)
 units_per_meter = grid.units_per_meter
 meters_per_unit = grid.meters_per_unit
@@ -80,7 +80,7 @@ _balanced = earthwork_core.balanced_platform(_elev)
 balanced_elevation_m = _balanced * meters_per_unit
 
 _platform = globals().get("platform_m")
-platform = _balanced if _platform is None else float(_platform) * units_per_meter
+platform = _balanced if _platform is None else float(_platform) * STANDARD.input_length_factor * units_per_meter
 platform_m = platform * meters_per_unit
 
 _cut, _fill = earthwork_core.platform_cut_fill(_elev, _cell_area, platform)
