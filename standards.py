@@ -88,6 +88,14 @@ class Standard:
 
         return None
 
+    def input_label(self, input_name):
+        """Display name for an input socket under this standard (e.g. a unit
+        suffix). Default: unchanged - the component always reads the canonical
+        name declared in COMPONENT_INPUTS.
+        """
+
+        return input_name
+
     def edition_stamp(self):
         """Editions + checked-on date for the provenance line (national text)."""
 
@@ -1103,6 +1111,12 @@ class USStandard(GenericStandard):
                 ("ANSI D", '"ANSI D"'), ("ANSI B", '"ANSI B"'),
             ]
         return None
+
+    def input_label(self, input_name):
+        """Length inputs are entered in feet under US, so show a _ft socket."""
+        if input_name.endswith("_m"):
+            return input_name[:-1] + "ft"
+        return input_name
 
     # -- cartogram (imperial) ----------------------------------------------
     def cartogram_report(self, result):

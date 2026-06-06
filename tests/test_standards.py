@@ -158,6 +158,13 @@ class USStandardTests(unittest.TestCase):
         self.assertIsNone(self.us.input_options("grid_size_m"))
         self.assertIsNone(standards.get_standard("RU").input_options("soil_class"))
 
+    def test_input_labels_show_feet(self):
+        self.assertEqual(self.us.input_label("grid_size_m"), "grid_size_ft")
+        self.assertEqual(self.us.input_label("flat_tolerance_m"), "flat_tolerance_ft")
+        self.assertEqual(self.us.input_label("soil_class"), "soil_class")  # not a length
+        self.assertEqual(self.us.input_label("building_area_m2"), "building_area_m2")  # _m2, not _m
+        self.assertEqual(standards.get_standard("RU").input_label("grid_size_m"), "grid_size_m")
+
 
 class CartogramTextTests(unittest.TestCase):
     def _result(self, grid_size_m):
