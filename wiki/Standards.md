@@ -133,11 +133,13 @@ computes (`Standard.volume_factor`). Layer names are English (inherited from INT
 
 **Inputs are imperial too.** Numeric length inputs — grid size, depths, widths,
 elevations — are **entered in feet** and converted internally via
-`Standard.input_length_factor`. (Volume inputs in `gh_15` and area inputs in
-`gh_22` stay in SI, because they usually chain from other components' SI outputs;
-their reports still display CY/SF.) Drop-downs are **standard-aware**: under US,
-`soil_class` shows **OSHA Type A/B/C** and `sheet` shows **ANSI/ARCH** instead of
-the RU defaults.
+`Standard.input_length_factor`. Their **sockets are relabeled** with a `_ft`
+suffix under US (e.g. `grid_size_m` shows as **`grid_size_ft`**) so the unit is
+unambiguous; the component still reads the canonical name. (Volume inputs in
+`gh_15` and area inputs in `gh_22` stay in SI, because they usually chain from
+other components' SI outputs; their reports still display CY/SF.) Drop-downs are
+**standard-aware**: under US, `soil_class` shows **OSHA Type A/B/C** and `sheet`
+shows **ANSI/ARCH** instead of the RU defaults.
 
 ### Soil types (OSHA) and excavation slopes
 

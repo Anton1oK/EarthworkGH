@@ -28,6 +28,10 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
 ## [Unreleased]
 
 ### Added
+- Standard-aware socket labels: under US, length-input sockets are relabeled with
+  a `_ft` suffix (e.g. `grid_size_m` shows as `grid_size_ft`) so the unit is
+  clear; the loader aliases the value back so the component reads its canonical
+  name. `Standard.input_label(name)` (base = unchanged; US = `_m` → `_ft`).
 - The wiki is now versioned in `wiki/` and **auto-published** to the GitHub wiki
   on push to `main` (`.github/workflows/publish-wiki.yml`); a test
   (`tests/test_wiki.py`) keeps the Component Reference in sync with the components.
