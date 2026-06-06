@@ -27,6 +27,12 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
 
 ## [0.9.2] - 2026-06-06
 
+### Fixed
+- Remote loader downloads are resilient to flaky networks: `_fetch` retries
+  transient failures (TLS handshake timeouts, dropped connections) with backoff,
+  and if a sync still fails the loader falls back to the cached copy with a
+  warning instead of hard-erroring (only failing when nothing usable is cached).
+
 ### Added
 - **Auto-update.** The remote loader compares the repo's `manifest.json` version
   to the cached one on each recompute and re-downloads automatically when it

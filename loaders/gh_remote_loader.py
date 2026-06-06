@@ -38,15 +38,20 @@ AUTO_UPDATE = True        # auto re-download when the repo's manifest version ch
 # ---------------------------------------------------------------------------
 
 
-def _fetch(url):
-    """Download a text file over verified HTTPS.
+def _fetch(url, attempts=4):
+    """Download a text file over verified HTTPS, with retries.
 
-    Tries the system certificate store, then certifi's bundle if available, since
-    Rhino's bundled Python sometimes lacks a usable store on Windows. TLS
-    verification stays ON; a clear message is raised if it cannot be satisfied.
+    Tries the system certificate store, then certifi's bundle if available (Rhino's
+    bundled Python sometimes lacks a usable store on Windows). Transient failures -
+    TLS handshake timeouts, dropped connections - are retried with a short backoff,
+    because raw.githubusercontent.com can be flaky and a full sync opens many
+    connections.
     """
 
+    import socket
     import ssl
+    import time
+    import urllib.error
     import urllib.request
 
     request = urllib.request.Request(url, headers={"User-Agent": "EarthworkStudioGH"})
@@ -58,17 +63,22 @@ def _fetch(url):
     except Exception:
         pass
 
-    last_ssl_error = None
-    for context in contexts:
-        try:
-            with urllib.request.urlopen(request, timeout=30, context=context) as response:
-                return response.read().decode("utf-8")
-        except ssl.SSLError as ssl_error:
-            last_ssl_error = ssl_error
+    last_error = None
+    for attempt in range(attempts):
+        for context in contexts:
+            try:
+                with urllib.request.urlopen(request, timeout=45, context=context) as response:
+                    return response.read().decode("utf-8")
+            except (urllib.error.URLError, ssl.SSLError, socket.timeout) as error:
+                last_error = error
+        if attempt < attempts - 1:
+            time.sleep(2.0 * (attempt + 1))  # backoff between rounds
     raise RuntimeError(
-        "TLS verification failed for {} ({}). Rhino's Python may be missing a "
-        "certificate store - run 'pip install certifi' in Rhino's Python, or "
-        "install the system certificates.".format(url, last_ssl_error)
+        "Download failed after {} tries for {}: {}. Usually a transient network / "
+        "proxy / firewall issue (TLS handshake) - recompute to retry. For a TLS "
+        "certificate error, run 'pip install certifi' in Rhino's Python.".format(
+            attempts, url, last_error
+        )
     )
 
 
@@ -179,8 +189,8 @@ if _manifest is None and os.path.exists(_cached_manifest_path):
     except Exception:
         _manifest = None
 
+_boot = os.path.join(_cache, "gh_remote.py")
 try:
-    _boot = os.path.join(_cache, "gh_remote.py")
     if _effective_refresh or not os.path.exists(_boot):
         _boot_url = "https://raw.githubusercontent.com/{}/{}/gh_remote.py".format(_boot_repo, ref)
         with open(_boot, "w", encoding="utf-8") as _handle:
@@ -192,22 +202,43 @@ try:
 
     # Pull the manifest + all modules and components into the cache.
     _sync = gh_remote.sync(repo, ref, _cache, _fetch, refresh=_effective_refresh, manifest=_manifest)
+    # Record the manifest (version + component list) ONLY after a successful sync,
+    # so a failed update never marks the cache as up to date.
+    try:
+        _record = _manifest if _manifest is not None else _sync.get("manifest")
+        if _record is not None:
+            with open(_cached_manifest_path, "w", encoding="utf-8") as _handle:
+                _json.dump(_record, _handle)
+    except Exception:
+        pass
 except Exception as _err:
-    raise RuntimeError(
-        "Remote loader could not fetch '{}@{}'. Reason: {}. Checklist: "
-        "(1) Rhino has internet access (a proxy / VPN / firewall can block it); "
-        "(2) the repo is public and the owner/name is correct; "
-        "(3) the ref '{}' (branch or tag) exists.".format(repo, ref, _err, ref)
-    )
-
-# Record the synced manifest (version + component list) for the next run / offline.
-try:
-    _synced_manifest = _manifest if _manifest is not None else _sync.get("manifest")
-    if _synced_manifest is not None:
-        with open(_cached_manifest_path, "w", encoding="utf-8") as _handle:
-            _json.dump(_synced_manifest, _handle)
-except Exception:
-    pass
+    # A fetch failed (e.g. a transient TLS handshake timeout during an update).
+    # If the cache can still run the component, use it and warn rather than break;
+    # only hard-fail when there is nothing usable cached.
+    _cached_ok = os.path.exists(_boot) and _manifest is not None
+    if _cached_ok and component_name:
+        try:
+            _cached_ok = os.path.exists(os.path.join(
+                _cache, *gh_remote.normalize_component(component_name).split("/")))
+        except Exception:
+            _cached_ok = os.path.exists(_boot)
+    if _cached_ok:
+        try:
+            import gh_remote
+            gh_remote = importlib.reload(gh_remote)
+        except Exception:
+            _cached_ok = False
+    if _cached_ok:
+        _sync = {"manifest": _manifest, "downloaded": 0, "files": []}
+        print("WARNING: could not reach GitHub ({}). Using the cached copy; "
+              "recompute when the connection is back to finish updating.".format(_err))
+    else:
+        raise RuntimeError(
+            "Remote loader could not fetch '{}@{}'. Reason: {}. Checklist: "
+            "(1) Rhino has internet access (a proxy / VPN / firewall can block it); "
+            "(2) the repo is public and the owner/name is correct; "
+            "(3) the ref '{}' (branch or tag) exists.".format(repo, ref, _err, ref)
+        )
 
 import gh_component_setup
 
