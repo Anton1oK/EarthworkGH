@@ -16,11 +16,13 @@ runs straight from this repository — no local checkout needed.
    name, e.g. `gh_01_cut_fill_cartogram`).
 3. Recompute again. The loader sets the input/output sockets and runs the
    component. Inputs that have a fixed set of values (e.g. `standard_code`,
-   `soil_class`, `sheet`) also come up as drop-downs. Set `REFRESH = True` briefly
-   to pull the latest code, then back to `False`.
+   `soil_class`, `sheet`) also come up as drop-downs.
 
-The loader fetches `manifest.json` and mirrors every listed module and component
-into the cache, so any component name resolves offline after the first sync.
+**Updates are automatic.** With `AUTO_UPDATE = True` (the default), the loader
+compares the repo's `manifest.json` version to the cached one on each recompute
+and re-downloads when a new release was published — so you rarely touch `REFRESH`
+(which forces a full re-download regardless). The loader mirrors every listed
+module and component into a cache, and falls back to it when offline.
 
 > Use the **Python 3** script component, not the legacy IronPython GhPython one —
 > the loader uses Python-3 networking and syntax.

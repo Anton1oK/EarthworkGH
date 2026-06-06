@@ -1,6 +1,6 @@
 {
   "name": "Earthwork Studio GH",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Rhino 8 / Grasshopper earthwork toolkit for private-house projects with SPDS (GOST/SP) outputs.",
   "modules": [
     "earthwork_core.py",

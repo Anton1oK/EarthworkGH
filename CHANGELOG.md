@@ -25,6 +25,15 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
   cell tags, so `gh_01` shows CY under the US standard. (Grid/elevation inputs
   remain in metres for now.)
 
+## [0.9.2] - 2026-06-06
+
+### Added
+- **Auto-update.** The remote loader compares the repo's `manifest.json` version
+  to the cached one on each recompute and re-downloads automatically when it
+  changed (`AUTO_UPDATE = True`, on by default) - so a pushed release propagates
+  on the next recompute without toggling `REFRESH`. The manifest version + the
+  component list are cached for offline use; bump the version to publish updates.
+
 ## [Unreleased]
 
 ### Added

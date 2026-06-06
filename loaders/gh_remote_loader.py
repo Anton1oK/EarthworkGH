@@ -8,8 +8,9 @@ toggling ``refresh`` (or recomputing) pulls the latest code.
 
 Setup (once):
   1. Set GITHUB_REPO below to your "owner/name" (and GITHUB_REF to a branch or,
-     for stability, a release tag like "v0.8.0"). Set REFRESH = True briefly to
-     pull the latest code, then back to False.
+     for stability, a release tag like "v0.8.0"). With AUTO_UPDATE on (default),
+     a new release (manifest.json version bump) is pulled automatically on the
+     next recompute; REFRESH = True forces a full re-download regardless.
   2. Connect a text panel with the component name (e.g. "gh_01_cut_fill_cartogram")
      to the FIRST input.
   3. Recompute. The first pass downloads + sets the input/output sockets (the only
@@ -32,7 +33,8 @@ import tempfile
 # ---- configure once -------------------------------------------------------
 GITHUB_REPO = "Anton1oK/EarthworkGH"   # owner/name of the repo to load from
 GITHUB_REF = "main"       # branch or tag; a tag (e.g. "v0.8.0") is reproducible
-REFRESH = False           # set True once to re-download the latest, then back
+REFRESH = False           # set True once to force a full re-download, then back
+AUTO_UPDATE = True        # auto re-download when the repo's manifest version changes
 # ---------------------------------------------------------------------------
 
 
@@ -141,9 +143,45 @@ _boot_repo = repo
 if _boot_repo.lower().startswith("github.com/"):
     _boot_repo = _boot_repo[len("github.com/"):]
 _boot_repo = _boot_repo.strip("/")
+
+import json as _json
+
+_cached_manifest_path = os.path.join(_cache, "manifest.json")
+_effective_refresh = bool(refresh)
+
+# Read the repo's manifest.json (sync needs it anyway). When AUTO_UPDATE is on,
+# a version different from the cached one triggers a full re-download - so pushing
+# a new release auto-updates on the next recompute. Offline falls back to cache.
+_manifest = None
+try:
+    _manifest = _json.loads(
+        _fetch("https://raw.githubusercontent.com/{}/{}/manifest.json".format(_boot_repo, ref))
+    )
+except Exception:
+    _manifest = None
+
+if AUTO_UPDATE and not _effective_refresh and _manifest is not None:
+    _remote_version = str(_manifest.get("version", ""))
+    _cached_version = ""
+    try:
+        if os.path.exists(_cached_manifest_path):
+            with open(_cached_manifest_path, encoding="utf-8") as _handle:
+                _cached_version = str(_json.load(_handle).get("version", ""))
+    except Exception:
+        _cached_version = ""
+    if _remote_version and _remote_version != _cached_version:
+        _effective_refresh = True
+
+if _manifest is None and os.path.exists(_cached_manifest_path):
+    try:
+        with open(_cached_manifest_path, encoding="utf-8") as _handle:
+            _manifest = _json.load(_handle)  # offline: reuse the cached manifest
+    except Exception:
+        _manifest = None
+
 try:
     _boot = os.path.join(_cache, "gh_remote.py")
-    if refresh or not os.path.exists(_boot):
+    if _effective_refresh or not os.path.exists(_boot):
         _boot_url = "https://raw.githubusercontent.com/{}/{}/gh_remote.py".format(_boot_repo, ref)
         with open(_boot, "w", encoding="utf-8") as _handle:
             _handle.write(_fetch(_boot_url))
@@ -153,7 +191,7 @@ try:
     gh_remote = importlib.reload(gh_remote)
 
     # Pull the manifest + all modules and components into the cache.
-    _sync = gh_remote.sync(repo, ref, _cache, _fetch, refresh=refresh)
+    _sync = gh_remote.sync(repo, ref, _cache, _fetch, refresh=_effective_refresh, manifest=_manifest)
 except Exception as _err:
     raise RuntimeError(
         "Remote loader could not fetch '{}@{}'. Reason: {}. Checklist: "
@@ -161,6 +199,15 @@ except Exception as _err:
         "(2) the repo is public and the owner/name is correct; "
         "(3) the ref '{}' (branch or tag) exists.".format(repo, ref, _err, ref)
     )
+
+# Record the synced manifest (version + component list) for the next run / offline.
+try:
+    _synced_manifest = _manifest if _manifest is not None else _sync.get("manifest")
+    if _synced_manifest is not None:
+        with open(_cached_manifest_path, "w", encoding="utf-8") as _handle:
+            _json.dump(_synced_manifest, _handle)
+except Exception:
+    pass
 
 import gh_component_setup
 
