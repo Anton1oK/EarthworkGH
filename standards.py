@@ -110,6 +110,13 @@ class Standard:
 
         return value
 
+    def input_label(self, name):
+        """Backward-compatible alias for older pasted loaders, which relabel length
+        inputs only. Newer loaders use ``socket_label`` for inputs and outputs.
+        """
+
+        return self.socket_label(name) if name.endswith("_m") else name
+
     def edition_stamp(self):
         """Editions + checked-on date for the provenance line (national text)."""
 

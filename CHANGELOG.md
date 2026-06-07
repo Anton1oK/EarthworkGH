@@ -25,6 +25,14 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
   cell tags, so `gh_01` shows CY under the US standard. (Grid/elevation inputs
   remain in metres for now.)
 
+## [0.9.4] - 2026-06-07
+
+### Fixed
+- Restored `Standard.input_label` (removed in 0.9.3) as a backward-compatible
+  shim, so a pasted loader from before 0.9.3 keeps relabeling length inputs
+  instead of silently stopping. The loader also now tolerates either
+  `socket_label` or `input_label` on the active standard.
+
 ## [0.9.3] - 2026-06-07
 
 ### Changed
