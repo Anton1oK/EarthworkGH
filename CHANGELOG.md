@@ -25,6 +25,19 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
   cell tags, so `gh_01` shows CY under the US standard. (Grid/elevation inputs
   remain in metres for now.)
 
+## [0.9.3] - 2026-06-07
+
+### Changed
+- **Output sockets now match the active standard.** Under US, output names are
+  relabeled and their values converted to the display unit: `fill_m3` → `fill_cy`
+  (cubic yards), `*_m2` → `*_sf`, `*_m` → `*_ft`, and the English-text outputs drop
+  the locale suffix (`report_ru` → `report`, `table_ru` → `table`). Volume/area
+  *inputs* (`gh_14`, `gh_15`, `gh_22`) are entered in the display unit and
+  converted back to SI, so chaining stays consistent. Implemented as
+  `Standard.socket_label` / `to_display` / `from_display` (RU unchanged; INT drops
+  only `_ru`); the loader applies them to every input and output. Replaces the
+  earlier input-only `input_label`.
+
 ## [0.9.2] - 2026-06-06
 
 ### Fixed

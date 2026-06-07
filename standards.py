@@ -76,6 +76,8 @@ class Standard:
     # standard's display unit for the baked cell tags (1.0 keeps m3; US uses yd3).
     volume_factor = 1.0
 
+    area_factor = 1.0  # m2 -> the standard's display area unit (US: square feet)
+
     # Numeric length inputs (grid sizes, depths, widths, elevations) are
     # multiplied by this to reach metres for the core (1.0 = metres; US = feet).
     input_length_factor = 1.0
@@ -88,13 +90,25 @@ class Standard:
 
         return None
 
-    def input_label(self, input_name):
-        """Display name for an input socket under this standard (e.g. a unit
-        suffix). Default: unchanged - the component always reads the canonical
-        name declared in COMPONENT_INPUTS.
+    def socket_label(self, name):
+        """Display name for an input/output socket under this standard - e.g. a
+        unit or locale suffix. Default: unchanged. Components always read/write the
+        canonical name declared in COMPONENT_INPUTS / COMPONENT_OUTPUTS.
         """
 
-        return input_name
+        return name
+
+    def to_display(self, name, value):
+        """Convert a numeric SI *output* value to the standard's display unit,
+        chosen by the name suffix. Default: unchanged."""
+
+        return value
+
+    def from_display(self, name, value):
+        """Convert a numeric *input* value from the standard's display unit back to
+        SI. Default: unchanged."""
+
+        return value
 
     def edition_stamp(self):
         """Editions + checked-on date for the provenance line (national text)."""
@@ -1049,6 +1063,10 @@ class GenericStandard(RussianStandard):
                  4: "Loam", 5: "Clay", 6: "Loess"}
         return names.get(soil_class, "unspecified") if soil_class else "unspecified"
 
+    def socket_label(self, name):
+        # English standard: drop the legacy _ru locale suffix (report_ru -> report).
+        return name[:-3] if name.endswith("_ru") else name
+
 
 # English layer-group overrides for GenericStandard (translate the RU groups).
 for _layer_method in (
@@ -1082,6 +1100,7 @@ class USStandard(GenericStandard):
     allowed_grid_sides_m = ()
     volume_label = "CY"
     volume_factor = 1.307950619  # m3 -> cubic yards
+    area_factor = 10.763910417  # m2 -> square feet
     input_length_factor = 0.3048  # length inputs are entered in feet
     regulations = (
         "OSHA 29 CFR 1926 Subpart P",
@@ -1112,11 +1131,46 @@ class USStandard(GenericStandard):
             ]
         return None
 
-    def input_label(self, input_name):
-        """Length inputs are entered in feet under US, so show a _ft socket."""
-        if input_name.endswith("_m"):
-            return input_name[:-1] + "ft"
-        return input_name
+    def socket_label(self, name):
+        """Relabel sockets for US: _ru->(drop), _m3->_cy, _m2->_sf, _m->_ft."""
+        if name.endswith("_ru"):
+            return name[:-3]
+        if name.endswith("_m3"):
+            return name[:-3] + "_cy"
+        if name.endswith("_m2"):
+            return name[:-3] + "_sf"
+        if name.endswith("_m"):
+            return name[:-1] + "ft"
+        return name
+
+    @staticmethod
+    def _scale(value, factor):
+        if isinstance(value, bool) or value is None:
+            return value
+        if isinstance(value, (int, float)):
+            return value * factor
+        if isinstance(value, (list, tuple)):
+            return [v * factor if isinstance(v, (int, float)) and not isinstance(v, bool) else v
+                    for v in value]
+        return value
+
+    def to_display(self, name, value):
+        """SI output -> US display unit: m3->CY, m2->SF, m->ft (by name suffix)."""
+        if name.endswith("_m3"):
+            return self._scale(value, self.volume_factor)
+        if name.endswith("_m2"):
+            return self._scale(value, self.area_factor)
+        if name.endswith("_m"):
+            return self._scale(value, 1.0 / self.input_length_factor)
+        return value
+
+    def from_display(self, name, value):
+        """US input -> SI. Volume/area only; length inputs convert in-component."""
+        if name.endswith("_m3"):
+            return self._scale(value, 1.0 / self.volume_factor)
+        if name.endswith("_m2"):
+            return self._scale(value, 1.0 / self.area_factor)
+        return value
 
     # -- cartogram (imperial) ----------------------------------------------
     def cartogram_report(self, result):

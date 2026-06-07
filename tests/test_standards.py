@@ -158,12 +158,33 @@ class USStandardTests(unittest.TestCase):
         self.assertIsNone(self.us.input_options("grid_size_m"))
         self.assertIsNone(standards.get_standard("RU").input_options("soil_class"))
 
-    def test_input_labels_show_feet(self):
-        self.assertEqual(self.us.input_label("grid_size_m"), "grid_size_ft")
-        self.assertEqual(self.us.input_label("flat_tolerance_m"), "flat_tolerance_ft")
-        self.assertEqual(self.us.input_label("soil_class"), "soil_class")  # not a length
-        self.assertEqual(self.us.input_label("building_area_m2"), "building_area_m2")  # _m2, not _m
-        self.assertEqual(standards.get_standard("RU").input_label("grid_size_m"), "grid_size_m")
+    def test_socket_labels_match_the_unit(self):
+        self.assertEqual(self.us.socket_label("grid_size_m"), "grid_size_ft")
+        self.assertEqual(self.us.socket_label("fill_m3"), "fill_cy")
+        self.assertEqual(self.us.socket_label("area_m2"), "area_sf")
+        self.assertEqual(self.us.socket_label("report_ru"), "report")  # English, drop _ru
+        self.assertEqual(self.us.socket_label("table_ru"), "table")
+        self.assertEqual(self.us.socket_label("soil_class"), "soil_class")  # no suffix
+        # RU keeps its canonical names; INT (English) drops only _ru.
+        self.assertEqual(standards.get_standard("RU").socket_label("fill_m3"), "fill_m3")
+        self.assertEqual(standards.get_standard("RU").socket_label("report_ru"), "report_ru")
+        self.assertEqual(standards.get_standard("INT").socket_label("report_ru"), "report")
+        self.assertEqual(standards.get_standard("INT").socket_label("fill_m3"), "fill_m3")  # metric
+
+    def test_output_values_convert_to_imperial(self):
+        self.assertAlmostEqual(self.us.to_display("fill_m3", 100.0), 130.7950619, places=4)
+        self.assertAlmostEqual(self.us.to_display("area_m2", 100.0), 1076.3910417, places=3)
+        self.assertAlmostEqual(self.us.to_display("length_m", 10.0), 32.80839895, places=4)
+        self.assertEqual(self.us.to_display("report_ru", "english text"), "english text")
+        self.assertEqual(self.us.to_display("compliant", True), True)
+        self.assertAlmostEqual(self.us.to_display("curve_cut_m3", [100.0, 200.0])[1], 261.59, places=1)
+        self.assertEqual(standards.get_standard("RU").to_display("fill_m3", 100.0), 100.0)
+
+    def test_input_values_convert_from_imperial(self):
+        self.assertAlmostEqual(self.us.from_display("cut_m3", 130.7950619), 100.0, places=4)
+        self.assertAlmostEqual(self.us.from_display("building_area_m2", 1076.3910417), 100.0, places=3)
+        # length inputs convert in the component, so from_display leaves them alone:
+        self.assertEqual(self.us.from_display("grid_size_m", 20.0), 20.0)
 
 
 class CartogramTextTests(unittest.TestCase):

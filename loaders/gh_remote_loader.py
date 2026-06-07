@@ -266,18 +266,35 @@ def _set_component_label(label):
     component.Message = "{}@{}".format(label, ref)
 
 
-def _execute_component(path, source, output_specs, input_aliases=None):
+def _execute_component(path, source, output_specs, input_aliases=None, standard=None):
     env = dict(globals())
-    # When the active standard relabels a socket (e.g. grid_size_m -> grid_size_ft
-    # under US), alias the value back to the canonical name the component reads.
+    # Aliases map the displayed socket name (e.g. grid_size_ft / cut_cy under US)
+    # back to the canonical name the component reads; convert the value from the
+    # standard's display unit to SI where needed (volumes/areas).
     if input_aliases:
         for display_name, canonical_name in input_aliases.items():
-            env[canonical_name] = env.get(display_name)
+            value = env.get(display_name)
+            if standard is not None:
+                try:
+                    value = standard.from_display(canonical_name, value)
+                except Exception:
+                    pass
+            env[canonical_name] = value
     env["__file__"] = path
     env["__name__"] = "__grasshopper_remote_component__"
     exec(compile(source, path, "exec"), env)
+    # Surface outputs under the standard's socket label, converting SI values to
+    # the display unit (m3 -> CY, m2 -> SF, m -> ft under US).
     for name, _type_name, _access in output_specs:
-        globals()[name] = env.get(name, None)
+        value = env.get(name, None)
+        display = name
+        if standard is not None:
+            try:
+                display = standard.socket_label(name) or name
+                value = standard.to_display(name, value)
+            except Exception:
+                display = name
+        globals()[display] = value
 
 
 # Component names in this repo (for the component drop-down on the first input).
@@ -321,23 +338,29 @@ else:
 
     # Standard-aware socket labels. The component still reads the canonical name;
     # _execute_component aliases the renamed value back to it.
+    def _label_of(_name):
+        if _active_std is not None:
+            try:
+                return _active_std.socket_label(_name) or _name
+            except Exception:
+                return _name
+        return _name
+
     _input_aliases = {}
     _display_inputs = []
     for _spec in component_inputs:
         _canon = _spec[0]
-        _label = _canon
-        if _active_std is not None:
-            try:
-                _label = _active_std.input_label(_canon) or _canon
-            except Exception:
-                _label = _canon
+        _label = _label_of(_canon)
         if _label != _canon:
             _input_aliases[_label] = _canon
         _display_inputs.append((_label,) + tuple(_spec[1:]))
 
-    # One loader socket (the component name) + the component's own inputs/outputs.
+    _display_outputs = [(_label_of(_ospec[0]),) + tuple(_ospec[1:]) for _ospec in component_outputs]
+
+    # One loader socket (the component name) + the component's own inputs/outputs,
+    # relabeled to the active standard's units (e.g. fill_m3 -> fill_cy under US).
     loader_inputs = (("component", "string", "item"),) + tuple(_display_inputs)
-    loader_outputs = tuple(component_outputs)
+    loader_outputs = tuple(_display_outputs)
 
     changed = False
     if "ghenv" in globals() and not gh_component_setup.io_matches(
@@ -349,7 +372,9 @@ else:
 
     if not changed:
         # Sockets are in place - run the component and surface its outputs.
-        _execute_component(_component_path, _component_source, component_outputs, _input_aliases)
+        _execute_component(
+            _component_path, _component_source, component_outputs, _input_aliases, _active_std
+        )
         # Offer drop-downs: components on the first input, plus any input that
         # declares options (a 5th element in its COMPONENT_INPUTS spec). The
         # active standard may override the options (e.g. US soil types / sheets).
@@ -367,11 +392,5 @@ else:
                         _as_string = _spec[1] in ("string", "text", "str")
                         _opts = gh_component_setup.value_list_items(_spec[4], _as_string)
                     # Target the displayed socket name (unchanged for option inputs).
-                    _target = _spec[0]
-                    if _active_std is not None:
-                        try:
-                            _target = _active_std.input_label(_spec[0]) or _spec[0]
-                        except Exception:
-                            _target = _spec[0]
-                    _vl_specs.append((_target, _opts))
+                    _vl_specs.append((_label_of(_spec[0]), _opts))
             gh_component_setup.schedule_value_lists(ghenv, _vl_specs)
