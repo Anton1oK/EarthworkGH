@@ -339,11 +339,16 @@ else:
     # Standard-aware socket labels. The component still reads the canonical name;
     # _execute_component aliases the renamed value back to it.
     def _label_of(_name):
+        # Prefer socket_label (inputs + outputs); fall back to the older
+        # input_label so a new loader still works with an older cached standard.
         if _active_std is not None:
-            try:
-                return _active_std.socket_label(_name) or _name
-            except Exception:
-                return _name
+            for _meth in ("socket_label", "input_label"):
+                _fn = getattr(_active_std, _meth, None)
+                if _fn is not None:
+                    try:
+                        return _fn(_name) or _name
+                    except Exception:
+                        pass
         return _name
 
     _input_aliases = {}

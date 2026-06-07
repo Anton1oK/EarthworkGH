@@ -180,6 +180,13 @@ class USStandardTests(unittest.TestCase):
         self.assertAlmostEqual(self.us.to_display("curve_cut_m3", [100.0, 200.0])[1], 261.59, places=1)
         self.assertEqual(standards.get_standard("RU").to_display("fill_m3", 100.0), 100.0)
 
+    def test_input_label_backward_compat(self):
+        # Older pasted loaders call input_label; it must still relabel length inputs
+        # (length only - the legacy behaviour) so they don't regress.
+        self.assertEqual(self.us.input_label("grid_size_m"), "grid_size_ft")
+        self.assertEqual(self.us.input_label("fill_m3"), "fill_m3")  # legacy: length only
+        self.assertEqual(standards.get_standard("RU").input_label("grid_size_m"), "grid_size_m")
+
     def test_input_values_convert_from_imperial(self):
         self.assertAlmostEqual(self.us.from_display("cut_m3", 130.7950619), 100.0, places=4)
         self.assertAlmostEqual(self.us.from_display("building_area_m2", 1076.3910417), 100.0, places=3)
