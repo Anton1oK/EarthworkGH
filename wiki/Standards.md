@@ -131,15 +131,22 @@ are in **cubic yards (CY)**, areas in **square feet (SF)**, lengths in **feet
 (ft)**; the reports and the baked cartogram cell tags convert from the SI the core
 computes (`Standard.volume_factor`). Layer names are English (inherited from INT).
 
-**Inputs are imperial too.** Numeric length inputs — grid size, depths, widths,
-elevations — are **entered in feet** and converted internally via
-`Standard.input_length_factor`. Their **sockets are relabeled** with a `_ft`
-suffix under US (e.g. `grid_size_m` shows as **`grid_size_ft`**) so the unit is
-unambiguous; the component still reads the canonical name. (Volume inputs in
-`gh_15` and area inputs in `gh_22` stay in SI, because they usually chain from
-other components' SI outputs; their reports still display CY/SF.) Drop-downs are
-**standard-aware**: under US, `soil_class` shows **OSHA Type A/B/C** and `sheet`
-shows **ANSI/ARCH** instead of the RU defaults.
+**Inputs and outputs are imperial too.** Every socket is **relabeled** to the US
+unit and its numeric value converted, so names and data match the standard:
+
+| Canonical (RU) | US socket | Unit |
+|---|---|---|
+| `grid_size_m`, `depth_m`, … | `grid_size_ft`, `depth_ft` | feet |
+| `fill_m3`, `cut_m3`, `balance_m3` | `fill_cy`, `cut_cy`, `balance_cy` | cubic yards |
+| `area_m2`, `plot_area_m2` | `area_sf`, `plot_area_sf` | square feet |
+| `report_ru`, `table_ru` | `report`, `table` | English text |
+
+Length inputs are converted in the component; volume/area inputs (`gh_14`,
+`gh_15`, `gh_22`) and **all numeric outputs** are converted at the socket
+(`Standard.socket_label` / `to_display` / `from_display`). The component always
+reads/writes its canonical SI name, so chaining stays consistent (a US `fill_cy`
+output feeds a US `cut_cy` input correctly). Drop-downs are **standard-aware**:
+under US, `soil_class` shows **OSHA Type A/B/C** and `sheet` shows **ANSI/ARCH**.
 
 ### Soil types (OSHA) and excavation slopes
 
