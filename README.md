@@ -22,17 +22,17 @@ Full documentation is in the **[project wiki](https://github.com/Anton1oK/Earthw
 
 ## What's inside
 
-24 components, grouped (see the
+20 components, grouped (see the
 [Component Reference](https://github.com/Anton1oK/EarthworkGH/wiki/Component-Reference)
 for every input and output):
 
 - **Setup** — select the country/standard.
 - **Earth-mass & cartogram** — SPDS square-grid cut/fill; flat grading pad.
 - **Excavation & slopes** — pit slope hachures; topsoil strip; temporary-slope aid; backfill schedule.
-- **Sections** — profile section; serial cross-sections with volumes.
-- **Relief & drainage** — slope arrows; contours; flow traces; ditch/swale.
+- **Sections** — one component: a profile, or serial cross-sections with volumes.
+- **Relief & drainage** — relief/contours/drainage in one pass; ditch/swale.
 - **Design authoring** — grading from spot elevations; blind area; driveway grades; ±0.000 / mass-haul optimiser.
-- **Accounting** — soil balance with bulking; combined bill of quantities.
+- **Accounting** — one component: bill of quantities + soil balance with bulking.
 - **Engineering checks** — frost-depth foundation check; foundation ring drain.
 - **Sheets & exchange** — site area balance (ТЭП); SPDS sheet + title block; Revit points CSV.
 

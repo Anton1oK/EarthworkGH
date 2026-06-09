@@ -142,7 +142,7 @@ unit and its numeric value converted, so names and data match the standard:
 | `report_ru`, `table_ru` | `report`, `table` | English text |
 
 Length inputs are converted in the component; volume/area inputs (`gh_14`,
-`gh_15`, `gh_22`) and **all numeric outputs** are converted at the socket
+`gh_22`) and **all numeric outputs** are converted at the socket
 (`Standard.socket_label` / `to_display` / `from_display`). The component always
 reads/writes its canonical SI name, so chaining stays consistent (a US `fill_cy`
 output feeds a US `cut_cy` input correctly). Drop-downs are **standard-aware**:
@@ -213,7 +213,7 @@ The stamp records the encoded editions; it does **not** replace engineer review.
 2. Override only the rules, report text and layer groups that differ.
 3. Register it in the `STANDARDS` dict.
 
-No changes to the core, the adapter, or the 24 components are needed — they read
+No changes to the core, the adapter, or the 20 components are needed — they read
 the active standard through `standards.get_standard()`, which honours the
 [`gh_00_standard`](Component-Reference#gh_00_standard--select-the-country--standard)
 selection.

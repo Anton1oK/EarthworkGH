@@ -8,7 +8,7 @@ them with the active standard's edition stamp so every output is traceable.
 from __future__ import annotations
 
 TOOL_NAME = "Earthwork Studio GH"
-__version__ = "0.9.4"
+__version__ = "0.10.0"
 
 
 def tool_stamp() -> str:

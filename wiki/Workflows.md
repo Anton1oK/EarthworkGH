@@ -48,20 +48,19 @@ The components compose into a sheet rather than needing a single "assemble" node
 2. Add detail:
    [`gh_17_blind_area`](Component-Reference#gh_17_blind_area--blind-area-отмостка),
    [`gh_18_driveway`](Component-Reference#gh_18_driveway--drivewaypath-grades--compliance),
-   drainage ([gh_11](Component-Reference#gh_11_drainage--flow-traces--ponding),
-   [gh_12](Component-Reference#gh_12_ditch--ditch--swale-with-invert-marks),
-   [gh_21](Component-Reference#gh_21_foundation_drain--foundation-ring-drain)) and
-   relief reading ([gh_09](Component-Reference#gh_09_relief--slope-arrows--spot-elevations)
-   spot heights/arrows, [gh_10](Component-Reference#gh_10_contours--proposed-contours)
-   contours).
+   the ditch ([gh_12](Component-Reference#gh_12_ditch--ditch--swale-with-invert-marks))
+   and foundation drain ([gh_21](Component-Reference#gh_21_foundation_drain--foundation-ring-drain)),
+   and relief reading — slope arrows, contours and drainage in one pass with
+   [gh_09](Component-Reference#gh_09_relief--relief-contours--drainage).
 3. Quantities: feed the cut/fill
-   ([gh_01](Component-Reference#gh_01_cut_fill_cartogram--spds-square-grid-cutfill)/[gh_05](Component-Reference#gh_05_serial_sections--serial-cross-sections--volumes)),
+   ([gh_01](Component-Reference#gh_01_cut_fill_cartogram--spds-square-grid-cutfill) or the
+   serial mode of [gh_04](Component-Reference#gh_04_section--sections-profile-or-serial)),
    topsoil ([gh_06](Component-Reference#gh_06_topsoil--topsoil-removal-plan)),
    backfill ([gh_08](Component-Reference#gh_08_backfill--bedding-backfill--compaction-schedule))
    and ditch ([gh_12](Component-Reference#gh_12_ditch--ditch--swale-with-invert-marks))
    volumes into
-   [gh_14](Component-Reference#gh_14_soil_balance--bulking--importexport)/[gh_15](Component-Reference#gh_15_quantities--combined-bill-of-quantities)
-   for the balance and the bill;
+   [gh_14](Component-Reference#gh_14_soil_balance--bill-of-quantities--soil-balance)
+   for the bill + balance;
    [gh_22](Component-Reference#gh_22_site_balance--site-area-balance-тэп) for the ТЭП.
 4. Bake everything onto the SPDS layer groups, drop a
    [gh_23](Component-Reference#gh_23_titleblock--spds-sheet-frame--title-block)

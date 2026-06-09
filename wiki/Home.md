@@ -33,7 +33,7 @@ engineering or Rhino code:
 | Adapter | `rhino_adapter.py` | Universal RhinoCommon plumbing; takes layer plans/labels as parameters. |
 | Standards | `standards.py` | All country/code-specific rules, text, citations and SPDS layer plans behind a `Standard` interface. |
 
-The 24 components are thin glue: they read inputs, call the core/adapter for
+The 20 components are thin glue: they read inputs, call the core/adapter for
 geometry, and pull text/rules/layers from the active standard. All component
 inputs are single-value (item access).
 
