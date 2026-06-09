@@ -200,117 +200,69 @@ schedule.
 
 ## Sections
 
-### gh_04_section — profile section
+### gh_04_section — sections (profile or serial)
 
-Profile section through the existing (and optional proposed) meshes along a line,
-with cut/fill regions and cross-sectional areas.
+Sections through the existing (and optional proposed) meshes. `serial = false`
+(default) draws a single **profile** along `line` with cut/fill regions and
+cross-sectional areas; `serial = true` lays **cross-sections** every `spacing_m`
+along `line` (used as a baseline) and reports average-end-area volumes. (Combines
+the former profile and serial-section tools.)
 
 | Input | Type | Req. | Description |
 |---|---|---|---|
 | `existing_mesh` | mesh | yes | Existing ground. |
 | `proposed_mesh` | mesh | — | Proposed ground. |
-| `section_line` | curve | yes | Section alignment. |
-| `divisions` | number | — | Samples along the line (default 50). |
+| `line` | curve | yes | Section line (a baseline when `serial`). |
+| `serial` | boolean | — | false = single profile; true = serial cross-sections. |
+| `spacing_m` | number | — | Serial: station spacing (default 5.0 m). |
+| `half_width_m` | number | — | Serial: half-width of each section (default 10.0 m). |
+| `divisions` | number | — | Samples (default 50 profile / 30 serial). |
 | `bake` | boolean | — | Write onto the section layer group. |
 
 | Output | Type | Description |
 |---|---|---|
-| `existing_profile` | curve | Existing ground line. |
-| `proposed_profile` | curve | Proposed ground line. |
-| `cut_regions` | curve (list) | Cut areas. |
-| `fill_regions` | curve (list) | Fill areas. |
-| `cut_area_m2`, `fill_area_m2` | number | Cross-sectional areas. |
+| `existing_profile`, `proposed_profile` | curve | Profile mode: ground lines. |
+| `cut_regions`, `fill_regions` | curve (list) | Profile mode: cut/fill areas. |
+| `cut_area_m2`, `fill_area_m2` | number | Profile mode: cross-sectional areas. |
+| `section_lines` | curve (list) | Serial mode: section cut lines. |
+| `existing_profiles`, `proposed_profiles` | curve (list) | Serial mode: ground per station. |
+| `cut_volume_m3`, `fill_volume_m3` | number | Serial mode: average-end-area volumes. |
 | `report_ru` | string | Report. |
-| `bake_status` | string | Bake result. |
-
-### gh_05_serial_sections — serial cross-sections & volumes
-
-Lays cross-sections along a baseline and reports average-end-area cut/fill
-volumes with a station table.
-
-| Input | Type | Req. | Description |
-|---|---|---|---|
-| `existing_mesh` | mesh | yes | Existing ground. |
-| `proposed_mesh` | mesh | — | Proposed ground. |
-| `baseline` | curve | yes | Centreline to station along. |
-| `spacing_m` | number | — | Station spacing (default 5.0 m). |
-| `half_width_m` | number | — | Half-width of each section (default 10.0 m). |
-| `divisions` | number | — | Samples per section (default 30). |
-| `bake` | boolean | — | Write onto the serial-section layer group. |
-
-| Output | Type | Description |
-|---|---|---|
-| `section_lines` | curve (list) | Section cut lines. |
-| `existing_profiles` | curve (list) | Existing ground per station. |
-| `proposed_profiles` | curve (list) | Proposed ground per station. |
-| `cut_volume_m3`, `fill_volume_m3` | number | Average-end-area volumes. |
-| `report_ru` | string | Report + station table. |
 | `bake_status` | string | Bake result. |
 
 ---
 
 ## Relief & drainage
 
-### gh_09_relief — slope arrows & spot elevations
+### gh_09_relief — relief, contours & drainage
 
-Downhill slope arrows, spot-elevation tags and the steepest slope (%).
-
-| Input | Type | Req. | Description |
-|---|---|---|---|
-| `terrain_mesh` | mesh | yes | Mesh to read. |
-| `boundary` | curve | — | Analysis boundary. |
-| `grid_size_m` | number | — | Sampling grid (default 5.0 m). |
-| `arrow_length_m` | number | — | Arrow length (default 0.6 × grid spacing). |
-| `min_slope_percent` | number | — | Hide arrows below this slope (default 0). |
-| `bake` | boolean | — | Write onto the relief layer group. |
-
-| Output | Type | Description |
-|---|---|---|
-| `slope_arrows` | curve (list) | Downhill arrows. |
-| `spot_elevations` | generic (list) | Spot-elevation tags. |
-| `max_slope_percent` | number | Steepest slope. |
-| `report_ru` | string | Report. |
-| `bake_status` | string | Bake result. |
-
-### gh_10_contours — proposed contours
-
-Minor/major horizontals at true elevations (marching squares).
-
-| Input | Type | Req. | Description |
-|---|---|---|---|
-| `terrain_mesh` | mesh | yes | Mesh to contour. |
-| `boundary` | curve | — | Analysis boundary. |
-| `interval_m` | number | — | Contour interval (default 0.5 m). |
-| `major_every` | number | — | Index contour every N (default 5). |
-| `grid_size_m` | number | — | Sampling grid (default 2.0 m). |
-| `bake` | boolean | — | Write onto the relief layer group. |
-
-| Output | Type | Description |
-|---|---|---|
-| `minor_contours` | curve (list) | Minor horizontals. |
-| `major_contours` | curve (list) | Index horizontals. |
-| `levels_m` | number (list) | Contour levels. |
-| `report_ru` | string | Report. |
-| `bake_status` | string | Bake result. |
-
-### gh_11_drainage — flow traces & ponding
-
-D8 flow traces and local high/low points, with a ponding warning.
+Reads the terrain grid **once** and produces slope arrows + spot elevations,
+contours, and drainage flow traces / ponding points (D8). Combines the former
+relief, contours and drainage tools — sampling the grid once is faster than three
+separate components. Wire the outputs you need.
 
 | Input | Type | Req. | Description |
 |---|---|---|---|
 | `terrain_mesh` | mesh | yes | Mesh to analyse. |
 | `boundary` | curve | — | Analysis boundary. |
 | `grid_size_m` | number | — | Sampling grid (default 2.0 m). |
+| `min_slope_percent` | number | — | Hide slope arrows below this (default 0). |
+| `arrow_length_m` | number | — | Arrow length (default 0.6 × grid spacing). |
+| `interval_m` | number | — | Contour interval (default 0.5 m). |
+| `major_every` | number | — | Index contour every N (default 5). |
 | `seed_every` | number | — | Seed a flow path every N nodes (default 3). |
-| `bake` | boolean | — | Write onto the drainage layer group. |
+| `bake` | boolean | — | Write onto the relief / contour / drainage layer groups. |
 
 | Output | Type | Description |
 |---|---|---|
+| `slope_arrows` | curve (list) | Downhill arrows. |
+| `spot_elevations` | generic (list) | Spot-elevation tags. |
+| `minor_contours`, `major_contours` | curve (list) | Contours. |
+| `levels_m` | number (list) | Contour levels. |
 | `flow_paths` | curve (list) | Descending flow traces. |
-| `low_points` | point (list) | Ponding/low points. |
-| `high_points` | point (list) | Local high points. |
-| `report_ru` | string | Report + ponding warning. |
+| `low_points`, `high_points` | point (list) | Ponding / local high points. |
+| `max_slope_percent` | number | Steepest slope. |
+| `report_ru` | string | Combined report (relief + contours + drainage). |
 | `bake_status` | string | Bake result. |
 
 ### gh_12_ditch — ditch / swale with invert marks
@@ -430,44 +382,32 @@ zero-balance (`±0.000`) elevation.
 
 ## Accounting & quantities
 
-### gh_14_soil_balance — bulking & import/export
+### gh_14_soil_balance — bill of quantities + soil balance
 
-Applies per-soil bulking/shrinkage to cut (bank) and fill (compacted) volumes and
-returns the import/export balance.
+Combined earth-mass accounting: a bill of quantities (topsoil + cut + fill +
+backfill + ditch) **and** the per-soil bulking/shrinkage balance (import/export)
+driven by cut + fill. Optional CSV. (Combines the former soil-balance and
+quantities tools.)
 
 | Input | Type | Req. | Description |
 |---|---|---|---|
-| `cut_m3` | number | yes | Excavation volume in bank (in-situ) m³. |
-| `fill_m3` | number | yes | Fill volume compacted m³. |
-| `soil_class` | number | — | Soil class 1–6 (sets default factors). |
+| `cut_m3` | number | — | Excavation volume in bank (in-situ). |
+| `fill_m3` | number | — | Fill volume compacted. |
+| `topsoil_m3` | number | — | Topsoil volume. |
+| `backfill_m3` | number | — | Backfill volume. |
+| `ditch_m3` | number | — | Ditch excavation volume. |
+| `soil_class` | number | — | Soil class 1–6 (sets default bulking factors). |
 | `initial_bulking` | number | — | Kр (loose) — overrides the soil default. |
 | `residual_bulking` | number | — | Kор (compacted) — overrides the soil default. |
+| `file_path` | string | — | Write the bill CSV to this path. |
 
 | Output | Type | Description |
 |---|---|---|
+| `total_m3` | number | Sum of the bill items. |
 | `import_m3` | number | Bank volume to import. |
 | `export_m3` | number | Loose volume to export. |
 | `cut_loose_m3` | number | Cut measured loose (after bulking). |
-| `report_ru` | string | Balance report. |
-
-### gh_15_quantities — combined bill of quantities
-
-One earth-mass bill (topsoil + cut + fill + backfill + ditch) with a totals row
-and optional CSV.
-
-| Input | Type | Req. | Description |
-|---|---|---|---|
-| `topsoil_m3` | number | — | Topsoil volume. |
-| `cut_m3` | number | — | Cut volume. |
-| `fill_m3` | number | — | Fill volume. |
-| `backfill_m3` | number | — | Backfill volume. |
-| `ditch_m3` | number | — | Ditch excavation volume. |
-| `file_path` | string | — | Write the CSV to this path. |
-
-| Output | Type | Description |
-|---|---|---|
-| `total_m3` | number | Sum of supplied items. |
-| `report_ru` | string | Bill of quantities. |
+| `report_ru` | string | Bill table + soil-balance report. |
 | `csv_text` | string | CSV of the bill. |
 | `status` | string | Write status. |
 

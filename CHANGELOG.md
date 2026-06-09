@@ -25,6 +25,19 @@ All notable changes to Earthwork Studio GH. Dates are ISO (YYYY-MM-DD).
   cell tags, so `gh_01` shows CY under the US standard. (Grid/elevation inputs
   remain in metres for now.)
 
+## [0.10.0] - 2026-06-09
+
+### Changed
+- **Consolidated 24 → 20 components.** Merged the overlapping tools:
+  - relief: `gh_09` (slope arrows) + `gh_10` (contours) + `gh_11` (drainage) →
+    one `gh_09_relief` that ray-samples the terrain grid **once** (faster);
+  - sections: `gh_04` (profile) + `gh_05` (serial) → one `gh_04_section` with a
+    `serial` toggle;
+  - accounting: `gh_14` (soil balance) + `gh_15` (quantities) → one
+    `gh_14_soil_balance` (bill + balance).
+  Removed `gh_05`, `gh_10`, `gh_11`, `gh_15`. Graphs using those need rewiring to
+  the merged components.
+
 ## [0.9.4] - 2026-06-07
 
 ### Fixed
